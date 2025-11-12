@@ -1,6 +1,7 @@
 package me.zink.clicker.controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.RequiredArgsConstructor;
 import me.zink.clicker.data.Data;
 import me.zink.clicker.model.Player;
 import me.zink.clicker.repo.PlayerRepo;
@@ -10,12 +11,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
+@RequestMapping(value = "/players")
 public class PlayerController {
 
     @Autowired
     PlayerRepo repo;
 
-    @RequestMapping(value = "/getAll", method = RequestMethod.GET)
+    @ResponseBody
+    @RequestMapping(value = "/all", method = RequestMethod.GET)
     public List<Player> getAllPlayers(){
         try{
             return repo.findAll();
@@ -24,9 +28,9 @@ public class PlayerController {
         }
     }
 
-    @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public Player getPlayer(@PathVariable long id){
-        System.out.println("Path - "+id);
+    @ResponseBody
+    @RequestMapping(method = RequestMethod.GET)
+    private Player getPlayer(@RequestParam Long id){
         try{
             return repo.getReferenceById(id);
         }catch (Exception ignored){
@@ -34,7 +38,8 @@ public class PlayerController {
         }
     }
 
-    @RequestMapping(value = "/save", method = RequestMethod.POST)
+    @ResponseBody
+    @RequestMapping(method = RequestMethod.POST)
     public String savePlayer(@RequestBody Player player){
         try{
             if(repo.existsById(player.getId())){
@@ -46,15 +51,4 @@ public class PlayerController {
             return "Error on saving!";
         }
     }
-
-    //TODO Save by id
-    /*@RequestMapping(value = "/save", method = RequestMethod.POST)
-    public String savePlayer(@RequestBody long id){
-        try{
-            Player player = repo.getReferenceById(id);
-            return player.toString();
-        }catch (Exception ignored){
-            return "Player not found!";
-        }
-    }*/
 }
