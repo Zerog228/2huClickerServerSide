@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,13 +31,33 @@ public class PlayerController {
 
     @ResponseBody
     @RequestMapping(method = RequestMethod.GET)
-    private Player getPlayer(@RequestParam Long id){
+    private Player getPlayerByID(@RequestParam() Long id){
         try{
             return repo.getReferenceById(id);
         }catch (Exception ignored){
             return null;
         }
     }
+
+
+    /**
+     * It'S EXTREMELY UNSAFE
+     */
+    /*@ResponseBody
+    @RequestMapping(method = RequestMethod.GET, value = "/{name}")
+    private Player getPlayerByName(@PathVariable(value="name") String name){
+        System.out.println("Tried to find player");
+        try{
+            return repo.findAll().stream().filter(player -> player.getName().equals(name)).toList().get(0);
+        }catch (Exception ignored){
+            System.out.println("Player not found");
+            try{
+                System.out.println("Name - "+name);
+                return getPlayerByID(Long.valueOf(name));
+            }catch (Exception ignored2){}
+            return null;
+        }
+    }*/
 
     @ResponseBody
     @RequestMapping(method = RequestMethod.POST)
