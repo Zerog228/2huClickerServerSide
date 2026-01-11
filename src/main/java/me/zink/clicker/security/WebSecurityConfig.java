@@ -1,36 +1,27 @@
-package me.zink.clicker.util;
+package me.zink.clicker.security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import me.zink.clicker.model.Player;
-import me.zink.clicker.repo.PlayerRepo;
-import me.zink.clicker.service.UserDetailsServiceImpl;
+
+import me.zink.clicker.security.jwt.AuthEntryPointJwt;
+import me.zink.clicker.security.jwt.AuthTokenFilter;
+import me.zink.clicker.security.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 @Configuration
 @EnableMethodSecurity
-@EnableWebSecurity
-public class AuthenticationFilter extends OncePerRequestFilter {
-
-    @Autowired
-    PlayerRepo repo;
-
+public class WebSecurityConfig {
     @Autowired
     UserDetailsServiceImpl userDetailsService;
 
@@ -43,11 +34,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 
@@ -57,24 +43,19 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         return authProvider;
     }
 
-    //TODO Encrypt password
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException, NumberFormatException {
-        long id = Long.parseLong(request.getParameter("id"));
-        String pw = request.getParameter("password");
-        Player player = repo.getReferenceById(id);
-        if(player.getPassword().equals(pw)) {
-            logger.info("Successfully authenticated user  " + player.getId());
-        } else {
-            logger.error("Failed to login user!");
-        }
-        filterChain.doFilter(request, response);
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http.csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
