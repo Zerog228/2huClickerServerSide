@@ -64,7 +64,17 @@ public class AuthController {
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
-                roles));
+                roles,
+
+                //PlayerData
+                userDetails.getLevel(),
+                userDetails.getUpgrade_points(),
+                userDetails.getExp(),
+                userDetails.getMoney(),
+                userDetails.getBombs(),
+                userDetails.getHealth(),
+                userDetails.getAbilities_map()
+                ));
     }
 
     @PostMapping("/signup")

@@ -9,91 +9,52 @@ import static me.zink.clicker.util.IntercontinentalMobInfo.*;
 
 public class Mob {
 
-    private MobType type;
-    @Getter
-    private int maxHealth;
-    private int locationLevel;
-    private final int LEVEL_HP_MULT = 10;
-    private final int LOCATION_LEVELS_PER_BOSS = 20;
+    private static final int LEVEL_HP_MULT = 10;
+    private static final int LOCATION_LEVELS_PER_BOSS = 20;
 
-    public Mob(int locationLevel){
-        if(locationLevel <= 0){
-            this.locationLevel = 1;
-            locationLevel = 1;
-        }
-        this.type = genType(locationLevel);
-        this.maxHealth = genHealth(locationLevel, type);
-        this.locationLevel = locationLevel;
+    //TODO Return money and exp amount based on killed mob and mults
+    private static void kill(/*Player killer*/){
+
     }
 
-    private int getTrueLocLevel(){
-        return (int) (locationLevel / LOCATION_LEVELS_PER_BOSS) + 1;
-    }
-
-    private int genHealth(int locationLevel){
-        if(locationLevel <= 0) {
-            this.locationLevel = 1;
-        }
-
-        return (int) (LEVEL_HP_MULT * getTrueLocLevel() * type.getHpMult());
-    }
-
-    private int genHealth(int locationLevel, MobType type){
-        if(locationLevel <= 0) {
-            this.locationLevel = 1;
-        }
-
-        return (int) (LEVEL_HP_MULT * getTrueLocLevel() * type.getHpMult());
-    }
-
-    //TODO Server-side on kill
-    private void kill(/*Player killer*/){
-        //this.isAlive = false;
-
-        /*if(killer != null){
-            killer.addExp((int) (killer.getExpMult() * getTrueLocLevel() * type.getExpMult()));
-            killer.addMoney((int) (killer.getMoneyMult() * getTrueLocLevel() * type.getMoneyMult()));
-        }*/
-    }
-
-    public String getType(){
-        return type.name();
-    }
-
-    private MobType genType(int locationLevel){
+    public static String genType(int locationLevel){
+        MobType type;
         //Check if boss
         if(locationLevel % LOCATION_LEVELS_PER_BOSS == 0){
             type = getBoss(locationLevel);
-            return type;
+            return type.name();
         }
 
         //Indoor or Outdoor. First 3 bosses will be outdoor, other 4 - indoor
         if(locationLevel < LOCATION_LEVELS_PER_BOSS * 3){
             type = getOutdoorEnemies().get(new Random().nextInt(getOutdoorEnemies().size()));
-            return type;
+            return type.name();
         }else if(locationLevel < LOCATION_LEVELS_PER_BOSS * 7){
             type = getIndoorEnemies().get(new Random().nextInt(getIndoorEnemies().size()));
-            return type;
+            return type.name();
+        }else{ // Final location mobs and then boss
+
         }
 
         //If none passes
+        //CAN BE DANGEROUS BECAUSE OF THE NPC'S?
         type = MobType.values()[new Random().nextInt(MobType.values().length)];
-        return type;
+        return type.name();
     }
 
-    private List<MobType> getOutdoorEnemies(){
+    private static List<MobType> getOutdoorEnemies(){
         return List.of(MobType.DAIYOUSEI, MobType.STAR, MobType.LUNA, MobType.SUNNY, MobType.FAIRY, MobType.KEDAMA, MobType.KAGEROU);
     }
 
-    private List<MobType> getIndoorEnemies(){
+    private static List<MobType> getIndoorEnemies(){
         return List.of(MobType.KEDAMA, MobType.FAIRY_MAID_ONE, MobType.FAIRY_MAID_TWO, MobType.FAIRY_MAID_THREE, MobType.KOAKUMA);
     }
 
-    private List<MobType> getAllBosses(){
+    private static List<MobType> getAllBosses(){
         return List.of(MobType.RUMIA, MobType.CIRNO, MobType.MEILING, MobType.PATCHOULI, MobType.SAKUYA, MobType.REMILIA, MobType.FLANDRE, MobType.MIMA);
     }
 
-    private MobType getBoss(int locationLevel){
+    private static MobType getBoss(int locationLevel){
         if(locationLevel == LOCATION_LEVELS_PER_BOSS)
             return MobType.RUMIA;
 
