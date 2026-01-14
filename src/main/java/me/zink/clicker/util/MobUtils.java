@@ -1,21 +1,32 @@
-package me.zink.clicker.mob;
+package me.zink.clicker.util;
 
-import lombok.Getter;
+import jakarta.annotation.Nullable;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.List;
 import java.util.Random;
 
 import static me.zink.clicker.util.IntercontinentalMobInfo.*;
 
-public class Mob {
+public class MobUtils {
 
     private static final int LEVEL_HP_MULT = 10;
     private static final int LOCATION_LEVELS_PER_BOSS = 20;
 
     //TODO Return money and exp amount based on killed mob and mults
-    private static void kill(/*Player killer*/){
+    /**
+     * @param /mob_name Name of the mob to kill
+     * @param /upgrades player upgrades
+     * @return Returns a pair of gained exp and money
+     * */
+    /*private static @Nullable Pair<Integer, Integer> kill(String mob_name, double money_mult){
+        try(){
 
-    }
+        }catch (Exception ignored){
+            System.out.println("Failed to convert mob name to mob instance! Mob name - "+mob_name);
+            return null;
+        }
+    }*/
 
     public static String genType(int locationLevel){
         MobType type;

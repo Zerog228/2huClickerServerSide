@@ -1,6 +1,6 @@
 package me.zink.clicker.controller;
 
-import me.zink.clicker.mob.Mob;
+import me.zink.clicker.util.MobUtils;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class GameController {
     @PreAuthorize("hasRole('USER')")
     public String getMob() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String mob = Mob.genType(userDetails.getLocation_level());
+        String mob = MobUtils.genType(userDetails.getLocationLevel());
         userDetails.setLastMobName(repo, mob);
         return mob;
     }

@@ -67,13 +67,14 @@ public class AuthController {
                 roles,
 
                 //PlayerData
+                userDetails.getLocationLevel(),
                 userDetails.getLevel(),
-                userDetails.getUpgrade_points(),
+                userDetails.getUpgradePoints(),
                 userDetails.getExp(),
                 userDetails.getMoney(),
                 userDetails.getBombs(),
                 userDetails.getHealth(),
-                userDetails.getAbilities_map()
+                userDetails.getUpgrades()
                 ));
     }
 

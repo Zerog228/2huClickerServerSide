@@ -1,15 +1,19 @@
 package me.zink.clicker.model;
 
+import com.google.gson.Gson;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import me.zink.clicker.repo.UserRepository;
+import me.zink.clicker.util.Upgrade;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -48,7 +52,9 @@ public class User {
     private int exp;
     private int money;
     private int bombs;
-    private HashMap<String, Integer> abilities_map;
+    @Getter
+    @Setter
+    private String upgrades;
     private int health;
 
     //Location data
@@ -72,13 +78,42 @@ public class User {
         this.bombs = 3;
         this.health = 10;
         this.location_level = 1;
-        this.abilities_map = new HashMap<>();
+        this.upgrades = upgradesToString();
 
         this.last_mob_name = "";
     }
 
-    public void increaseExp(){
-        this.exp++;
+    public void addExp(int amount, int level_up_cost){
+        exp += amount;
+        while(exp >= levelUpCost(level_up_cost)){
+            addLevel(1);
+        }
+    }
+
+    private void addLevel(int amount){
+        this.level += amount;
+        this.upgrade_points++;
+    }
+
+    public int levelUpCost(int level_up_cost){
+        return level_up_cost * level * level;
+    }
+
+    public void addMoney(int amount){
+        this.money+=amount;
+    }
+
+    public boolean removeMoney(int amount){
+        if(money >= amount){
+            money -= amount;
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    public void increaseLevel(){
+        this.level++;
     }
 
     public void setLastMobName(String mobName){
@@ -89,4 +124,11 @@ public class User {
         return this.last_mob_name;
     }
 
+    public static String upgradesToString(){
+        return upgradesToString(Arrays.stream(Upgrade.values()).collect(Collectors.toMap(value -> value, value -> 0)));
+    }
+
+    public static String upgradesToString(Map<Upgrade, Integer> upgrades){
+        return new Gson().toJson(upgrades);
+    }
 }

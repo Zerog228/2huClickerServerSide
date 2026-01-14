@@ -1,11 +1,12 @@
 package me.zink.clicker.security.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.Setter;
 import me.zink.clicker.model.User;
 import me.zink.clicker.repo.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import me.zink.clicker.util.Upgrade;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,20 +31,12 @@ public class UserDetailsImpl implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    //Player entity
-    @Getter
-    @Setter
-    private int level, upgrade_points, exp, money, bombs, health, location_level;
-    @Getter
-    @Setter
-    private HashMap<String, Integer> abilities_map;
-
     private User user;
 
-    private String last_mob_name;
+    private static final int LEVEL_INCREASE_COST_MULT = 20;
+    private Map<Upgrade, Integer> upgrades;
 
     public UserDetailsImpl(Long id, String username, String email, String password, Collection<? extends GrantedAuthority> authorities,
-                           int level, int upgrade_points, int exp, int money, int bombs, int health, HashMap<String, Integer> abilities_map, String last_mob_name,
                            User user) {
         this.id = id;
         this.username = username;
@@ -51,19 +44,8 @@ public class UserDetailsImpl implements UserDetails {
         this.password = password;
         this.authorities = authorities;
 
-        //Game data
-        this.level = level;
-        this.upgrade_points = upgrade_points;
-        this.exp = exp;
-        this.money = money;
-        this.bombs = bombs;
-        this.health = health;
-        this.location_level = level;
-        this.abilities_map = abilities_map;
-
-        this.last_mob_name = last_mob_name;
-
         this.user = user;
+        this.upgrades = stringToUpgrades(user.getUpgrades());
     }
 
     public static UserDetailsImpl build(User user) {
@@ -78,18 +60,6 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPassword(),
                 authorities,
 
-                //Game data
-                user.getLevel(),
-                user.getUpgrade_points(),
-                user.getExp(),
-                user.getMoney(),
-                user.getBombs(),
-                user.getHealth(),
-                user.getAbilities_map(),
-
-                user.getLastMobName(),
-
-                //User
                 user
                 );
     }
@@ -99,9 +69,96 @@ public class UserDetailsImpl implements UserDetails {
         repo.save(user);
     }
 
-    public void increaseExp(UserRepository repo){
-        user.increaseExp();
+    public int getExp(){
+        return user.getExp();
+    }
+
+    public void addExp(UserRepository repo, int amount){
+        user.addExp(amount, LEVEL_INCREASE_COST_MULT);
         repo.save(user);
+    }
+
+    public int getLevel(){
+        return user.getLevel();
+    }
+
+    public void increaseLevel(UserRepository repo){
+        user.increaseLevel();
+        repo.save(user);
+    }
+
+    public int getUpgradePoints(){
+        return user.getUpgrade_points();
+    }
+
+    public int levelUpCost(){
+        return user.levelUpCost(LEVEL_INCREASE_COST_MULT);
+    }
+
+    public int getMoney() {
+        return user.getMoney();
+    }
+
+    public void addMoney(UserRepository repo, int amount){
+        user.addMoney(amount);
+        repo.save(user);
+    }
+
+    public boolean removeMoney(UserRepository repo, int amount){
+        boolean removed = user.removeMoney(amount);
+        if(removed){
+            repo.save(user);
+        }
+        return removed;
+    }
+
+    public int getBombs(){
+        return user.getBombs();
+    }
+
+    public int getHealth(){
+        return user.getHealth();
+    }
+
+    public int getLocationLevel(){
+        return user.getLocation_level();
+    }
+
+    public String getUpgrades(){
+        return user.getUpgrades();
+    }
+
+    public void setUpgrades(UserRepository repo, String upgrades){
+        user.setUpgrades(upgrades);
+        repo.save(user);
+    }
+
+    public static String upgradesToString(Map<Upgrade, Integer> upgrades){
+        return new Gson().toJson(upgrades);
+    }
+
+    public static Map<Upgrade, Integer> stringToUpgrades(String upgrades){
+        return new Gson().fromJson(upgrades, HashMap.class);
+    }
+
+    public boolean upgradeAbility(UserRepository repo, Upgrade upgradeType){
+        try {
+            int upgrade_level = upgrades.get(upgradeType);
+            if(upgrade_level < upgradeType.getMaxLevel()){
+                if (removeMoney(repo, (upgrade_level + 1) * levelUpCost() + upgrade_level * upgradeType.getAdditionalCostPerLevel())) {
+                    upgrades.put(upgradeType, ++upgrade_level);
+                    setUpgrades(repo, upgradesToString(upgrades));
+                    return true;
+                } else {
+                    return false;
+                }
+            }else {
+                return false;
+            }
+        }catch (Exception e){
+            e.fillInStackTrace();
+            return false;
+        }
     }
 
     @Override
