@@ -2,42 +2,38 @@ package me.zink.clicker.security.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
-import lombok.Setter;
 import me.zink.clicker.model.User;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.util.Upgrade;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
-
     private static final long serialVersionUID = 1L;
 
+    //TODO Я могу сохранять данные юзеров не при каждой операции, а раз в определённое время
     @Getter
     private Long id;
-
     private String username;
-
     @Getter
     private String email;
-
     @JsonIgnore
     private String password;
-
     private Collection<? extends GrantedAuthority> authorities;
 
     private User user;
 
+    //Player data
     private static final int LEVEL_INCREASE_COST_MULT = 20;
     private Map<Upgrade, Integer> upgrades;
 
     public UserDetailsImpl(Long id, String username, String email, String password, Collection<? extends GrantedAuthority> authorities,
-                           User user) {
+                          User user) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -65,8 +61,12 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public void setLastMobName(UserRepository repo, String last_mob_name){
-        user.setLastMobName(last_mob_name);
+        user.setLast_mob_name(last_mob_name);
         repo.save(user);
+    }
+
+    public String getLastMobName(){
+        return user.getLast_mob_name();
     }
 
     public int getExp(){
@@ -82,7 +82,7 @@ public class UserDetailsImpl implements UserDetails {
         return user.getLevel();
     }
 
-    public void increaseLevel(UserRepository repo){
+    private void increaseLevel(UserRepository repo){
         user.increaseLevel();
         repo.save(user);
     }
@@ -124,6 +124,11 @@ public class UserDetailsImpl implements UserDetails {
         return user.getLocation_level();
     }
 
+    public void increaseLocationLevel(UserRepository repo){
+        user.increaseLocationLevel();
+        repo.save(user);
+    }
+
     public String getUpgrades(){
         return user.getUpgrades();
     }
@@ -133,31 +138,38 @@ public class UserDetailsImpl implements UserDetails {
         repo.save(user);
     }
 
+    public float getMoneyMult() {
+        return 1 + (this.upgrades.get(Upgrade.MORE_MONEY) * Upgrade.MORE_MONEY.getAbilityPower());
+    }
+
+    public float getExpMult() {
+        return 1 + (this.upgrades.get(Upgrade.MORE_EXP) * Upgrade.MORE_EXP.getAbilityPower());
+    }
+
     public static String upgradesToString(Map<Upgrade, Integer> upgrades){
-        return new Gson().toJson(upgrades);
+        return new Gson().toJson(upgrades, new TypeToken<Map<Upgrade, Integer>>() {}.getType());
     }
 
-    public static Map<Upgrade, Integer> stringToUpgrades(String upgrades){
-        return new Gson().fromJson(upgrades, HashMap.class);
+    public static HashMap<Upgrade, Integer> stringToUpgrades(String upgrades){
+        return new Gson().fromJson(upgrades, new TypeToken<Map<Upgrade, Integer>>() {}.getType());
     }
 
-    public boolean upgradeAbility(UserRepository repo, Upgrade upgradeType){
+    public Upgrade.Message upgradeAbility(UserRepository repo, Upgrade upgradeType){
         try {
-            int upgrade_level = upgrades.get(upgradeType);
+            int upgrade_level = upgrades.getOrDefault(upgradeType, 0);
             if(upgrade_level < upgradeType.getMaxLevel()){
                 if (removeMoney(repo, (upgrade_level + 1) * levelUpCost() + upgrade_level * upgradeType.getAdditionalCostPerLevel())) {
                     upgrades.put(upgradeType, ++upgrade_level);
                     setUpgrades(repo, upgradesToString(upgrades));
-                    return true;
+                    return Upgrade.Message.SUCCESS;
                 } else {
-                    return false;
+                    return Upgrade.Message.F_NOT_ENOUGH_MONEY;
                 }
             }else {
-                return false;
+                return Upgrade.Message.F_MAX_LEVEL;
             }
         }catch (Exception e){
-            e.fillInStackTrace();
-            return false;
+            return Upgrade.Message.F_ABILITY_NOT_FOUND;
         }
     }
 

@@ -23,11 +23,13 @@ public class JwtResponse {
     private List<String> roles;
 
     //Player entity
+    @Getter
     private int level, upgrade_points, exp, money, bombs, health, location_level;
+    @Getter
     private String abilities_map;
 
     public JwtResponse(String accessToken, Long id, String username, String email, List<String> roles,
-                      Integer location_level, Integer level, Integer upgrade_points, Integer exp, Integer money, Integer bombs, Integer health, String abilities_map) {
+                      int location_level, int level, int upgrade_points, int exp, int money, int bombs, int health, String abilities_map) {
         this.token = accessToken;
         this.id = id;
         this.username = username;
@@ -35,13 +37,13 @@ public class JwtResponse {
         this.roles = roles;
 
         //Game data
+        this.location_level = location_level;
         this.level = level;
         this.upgrade_points = upgrade_points;
         this.exp = exp;
         this.money = money;
         this.bombs = bombs;
         this.health = health;
-        this.location_level = location_level;
         this.abilities_map = abilities_map;
     }
 

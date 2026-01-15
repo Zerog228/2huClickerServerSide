@@ -103,6 +103,10 @@ public class User {
         this.money+=amount;
     }
 
+    public void increaseLocationLevel(){
+        this.location_level++;
+    }
+
     public boolean removeMoney(int amount){
         if(money >= amount){
             money -= amount;
@@ -114,14 +118,6 @@ public class User {
 
     public void increaseLevel(){
         this.level++;
-    }
-
-    public void setLastMobName(String mobName){
-        this.last_mob_name = mobName;
-    }
-
-    public String getLastMobName(){
-        return this.last_mob_name;
     }
 
     public static String upgradesToString(){

@@ -1,6 +1,7 @@
 package me.zink.clicker.util;
 
-import jakarta.annotation.Nullable;
+import me.zink.clicker.repo.UserRepository;
+import me.zink.clicker.security.service.UserDetailsImpl;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.List;
@@ -13,20 +14,30 @@ public class MobUtils {
     private static final int LEVEL_HP_MULT = 10;
     private static final int LOCATION_LEVELS_PER_BOSS = 20;
 
-    //TODO Return money and exp amount based on killed mob and mults
     /**
-     * @param /mob_name Name of the mob to kill
-     * @param /upgrades player upgrades
-     * @return Returns a pair of gained exp and money
+     * @return Returns a pair of if the mob was killed and new mob
      * */
-    /*private static @Nullable Pair<Integer, Integer> kill(String mob_name, double money_mult){
-        try(){
+    public static Pair<Boolean, String> kill(UserRepository repo, UserDetailsImpl user){
+        int loc_level = user.getLocationLevel();
+        try{
+            MobType type = MobType.valueOf(user.getLastMobName());
+            user.addExp(repo, (int) (user.getExpMult() * getTrueLocLevel(loc_level) * type.getExpMult()));
+            user.addMoney(repo, (int) (user.getMoneyMult() * getTrueLocLevel(loc_level) * type.getMoneyMult()));
 
-        }catch (Exception ignored){
-            System.out.println("Failed to convert mob name to mob instance! Mob name - "+mob_name);
-            return null;
+            //Increase loc level, set new mob type
+            user.increaseLocationLevel(repo);
+            user.setLastMobName(repo, genType(user.getLocationLevel()));
+            return new Pair<>(true, user.getLastMobName());
+        }catch (Exception e){
+            System.out.println("Failed to kill a mob! Mob type does not exist!");
+            e.printStackTrace();
+            return new Pair<>(false, null);
         }
-    }*/
+    }
+
+    private static int getTrueLocLevel(int locationLevel){
+        return (int) (locationLevel / LOCATION_LEVELS_PER_BOSS) + 1;
+    }
 
     public static String genType(int locationLevel){
         MobType type;
@@ -48,7 +59,7 @@ public class MobUtils {
         }
 
         //If none passes
-        //CAN BE DANGEROUS BECAUSE OF THE NPC'S?
+        //CAN BE DANGEROUS BECAUSE OF THE NPCs and bosses? Maybe not really.
         type = MobType.values()[new Random().nextInt(MobType.values().length)];
         return type.name();
     }
@@ -90,6 +101,13 @@ public class MobUtils {
         return MobType.KEDAMA;
     }
 
+    public static boolean mobExists(String mobType){
+        try{
+            MobType.valueOf(mobType);
+            return true;
+        }catch (Exception ignored){}
+        return false;
+    }
 
     enum MobType {
         //Outdoor mobs

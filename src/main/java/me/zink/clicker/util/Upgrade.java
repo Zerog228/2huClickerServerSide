@@ -1,5 +1,8 @@
 package me.zink.clicker.util;
 
+import lombok.Getter;
+import org.antlr.v4.runtime.misc.Pair;
+
 public enum Upgrade {
     LONGER_STICK(5, 15, 1, 15, 1f), //Damage upgrade
     MORE_EXP(3, 50, 1, 50, 0.1f),
@@ -35,5 +38,30 @@ public enum Upgrade {
 
     public float getAbilityPower() {
         return ability_power;
+    }
+
+    @Getter
+    public enum Message{
+        SUCCESS("Upgraded successfully!", true),
+        F_NOT_ENOUGH_MONEY("Not enough money!"),
+        F_MAX_LEVEL("Already upgraded to max level!"),
+        F_ABILITY_NOT_FOUND("Ability not found!"),
+        ;
+
+        private final String message;
+        private final boolean success;
+
+        Message(String message){
+            this(message, false);
+        }
+
+        Message(String message, boolean success){
+            this.message = message;
+            this.success = success;
+        }
+
+        public Pair<Boolean, String> asPair(){
+            return new Pair<>(success, message);
+        }
     }
 };
