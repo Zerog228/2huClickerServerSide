@@ -80,6 +80,12 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+        if(signUpRequest.getPassword() == null || signUpRequest.getPassword().length() < 8 || signUpRequest.getPassword().length() >= 40){
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: Password is incorrect!"));
+        }
+
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
             return ResponseEntity
                     .badRequest()
