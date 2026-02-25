@@ -151,7 +151,7 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static HashMap<Upgrade, Integer> stringToUpgrades(String upgrades){
-        return new Gson().fromJson(upgrades, new TypeToken<Map<Upgrade, Integer>>() {}.getType());
+        return new Gson().fromJson(upgrades, new TypeToken<Map<Upgrade, Integer>>(){}.getType());
     }
 
     public Upgrade.Message upgradeAbility(UserRepository repo, Upgrade upgradeType){
