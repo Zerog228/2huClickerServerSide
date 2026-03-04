@@ -62,6 +62,8 @@ public class User {
 
     //Other
     private String last_mob_name;
+    private List<String> current_location_mobs;
+    private List<String> next_location_mobs;
 
     public User() {
     }

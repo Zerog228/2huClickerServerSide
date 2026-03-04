@@ -1,9 +1,11 @@
 package me.zink.clicker.util;
 
+import lombok.Getter;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
 import org.antlr.v4.runtime.misc.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -12,6 +14,7 @@ import static me.zink.clicker.util.IntercontinentalMobInfo.*;
 public class MobUtils {
 
     private static final int LEVEL_HP_MULT = 10;
+    @Getter
     private static final int LOCATION_LEVELS_PER_BOSS = 20;
 
     /**
@@ -62,6 +65,19 @@ public class MobUtils {
         //CAN BE DANGEROUS BECAUSE OF THE NPCs and bosses? Maybe not really.
         type = MobType.values()[new Random().nextInt(MobType.values().length)];
         return type.name();
+    }
+
+    /**
+     * Automatically decides player's location level and generates list of 'LOCATION_LEVELS_PER_BOSS' mobs for it.
+     * Note that there will always be boss at the end
+     * */
+    public static List<String> genMobsForLocation(int location){
+        int realLocation = location / LOCATION_LEVELS_PER_BOSS; //1 2 3 4 5 6
+        List<String> mobIds = new ArrayList<>(LOCATION_LEVELS_PER_BOSS);
+        for(int i = realLocation * LOCATION_LEVELS_PER_BOSS + 1; i <= realLocation * LOCATION_LEVELS_PER_BOSS + LOCATION_LEVELS_PER_BOSS; i++){
+            mobIds.add(genType(i));
+        }
+        return mobIds;
     }
 
     private static List<MobType> getOutdoorEnemies(){

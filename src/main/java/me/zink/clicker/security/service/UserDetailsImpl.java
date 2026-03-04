@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
 import me.zink.clicker.model.User;
 import me.zink.clicker.repo.UserRepository;
+import me.zink.clicker.util.MobUtils;
 import me.zink.clicker.util.Upgrade;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -67,6 +68,38 @@ public class UserDetailsImpl implements UserDetails {
 
     public String getLastMobName(){
         return user.getLast_mob_name();
+    }
+
+    public List<String> getCurrentLocationMobs(){
+        return user.getCurrent_location_mobs();
+    }
+
+    public List<String> getOrGenCurrentLocationMobs(UserRepository repo){
+        user.setCurrent_location_mobs(MobUtils.genMobsForLocation(user.getLocation_level()));
+        repo.save(user);
+
+        return user.getCurrent_location_mobs();
+    }
+
+    public void setCurrentLocationMobs(UserRepository repo, List<String> current_location_mobs){
+        user.setCurrent_location_mobs(current_location_mobs);
+        repo.save(user);
+    }
+
+    public List<String> getNextLocationMobs(){
+        return user.getNext_location_mobs();
+    }
+
+    public List<String> getOrGenNextLocationMobs(UserRepository repo){
+        user.setNext_location_mobs(MobUtils.genMobsForLocation(user.getLocation_level() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+        repo.save(user);
+
+        return user.getNext_location_mobs();
+    }
+
+    public void setNextLocationMobs(UserRepository repo, List<String> next_location_mobs){
+        user.setNext_location_mobs(next_location_mobs);
+        repo.save(user);
     }
 
     public int getExp(){
