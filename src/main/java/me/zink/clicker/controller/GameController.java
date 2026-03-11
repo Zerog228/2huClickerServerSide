@@ -62,6 +62,9 @@ public class GameController {
     @GetMapping("/killmobs")
     @PreAuthorize("hasRole('USER')")
     public boolean killMobs() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<String> mobs = userDetails.getOrGenCurrentLocationMobs(repo);
+
         //TODO
         return mobs;
     }
@@ -73,19 +76,12 @@ public class GameController {
         return ;
     }
 
-    @GetMapping("/killmob")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Pair<Boolean, String> killMob() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return MobUtils.kill(repo, userDetails);
-    }
-
     @GetMapping("/upgrade")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> upgradeAbility(@Valid @RequestBody UpgradeAbilityRequest upgradeRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
-            Upgrade.Message message = userDetails.upgradeAbility(repo, Upgrade.valueOf(upgradeRequest.getAbility()));
+            Upgrade.Message message = userDetails.upgradeAbility(repo, upgradeRequest.getAbility());
             if(message.isSuccess()){
                 return ResponseEntity.ok().build();
             }else{
@@ -94,6 +90,13 @@ public class GameController {
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/killmob")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Pair<Boolean, String> killMob() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return MobUtils.kill(repo, userDetails);
     }
 
     /*@GetMapping("/upgrade/{id}")

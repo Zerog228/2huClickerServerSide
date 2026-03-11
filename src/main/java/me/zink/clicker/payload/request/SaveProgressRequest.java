@@ -2,11 +2,10 @@ package me.zink.clicker.payload.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.Setter;
 
-/**
- * Synchronizing progress on mob kill
- * */
 @Getter
+@Setter
 public class SaveProgressRequest {
 
     @NotBlank
@@ -32,6 +31,5 @@ public class SaveProgressRequest {
 
     @NotBlank
     private int playerLevel;
-
 
 }
