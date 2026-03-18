@@ -1,5 +1,6 @@
 package me.zink.clicker.util;
 
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
@@ -38,6 +39,39 @@ public class MobUtils {
         }
     }
 
+    /**
+     * Generates expected rewards based on mob list.
+     * If mob does not exist then rewards for it will be set to 0
+     * @param mobs Mobs to kill
+     * @return Pair of MONEY and EXP
+     * */
+    public static Pair<Integer, Integer> getRewards(List<String> mobs, UserDetailsImpl userDetails){
+        return getRewards(mobs, userDetails, userDetails.getLocationLevel());
+    }
+
+    /**
+     * Generates expected rewards based on mob list.
+     * If mob does not exist then rewards for it will be set to 0
+     * @param mobs Mobs to kill
+     * @return Pair of MONEY and EXP
+     * */
+    public static Pair<Integer, Integer> getRewards(List<String> mobs, UserDetailsImpl userDetails, int location_level){
+        final double EXP_MULT = userDetails.getExpMult(), MONEY_MULT = userDetails.getMoneyMult();
+        int money_reward = 0, exp_reward = 0;
+
+        final int TRUE_LOCATION_LEVEL = getTrueLocLevel(location_level);
+
+        for(String mob_name : mobs){
+            MobType mob = getMob(mob_name);
+            if(mob != null){
+                money_reward += (int) (mob.getMoneyMult() * MONEY_MULT * TRUE_LOCATION_LEVEL);
+                exp_reward += (int) (mob.getExpMult() * EXP_MULT * TRUE_LOCATION_LEVEL);
+            }
+        }
+
+        return new Pair<>(money_reward, exp_reward);
+    }
+
     private static int getTrueLocLevel(int locationLevel){
         return (int) (locationLevel / LOCATION_LEVELS_PER_BOSS) + 1;
     }
@@ -68,7 +102,7 @@ public class MobUtils {
     }
 
     /**
-     * Automatically decides player's location level and generates list of 'LOCATION_LEVELS_PER_BOSS' mobs for it.
+     * Automatically decides player's REAL location level and generates list of 'LOCATION_LEVELS_PER_BOSS' mobs for it.
      * Note that there will always be boss at the end
      * */
     public static List<String> genMobsForLocation(int location){
@@ -117,12 +151,12 @@ public class MobUtils {
         return MobType.KEDAMA;
     }
 
-    public static boolean mobExists(String mobType){
+    @Nullable
+    private static MobType getMob(String mobType){
         try{
-            MobType.valueOf(mobType);
-            return true;
+            return MobType.valueOf(mobType);
         }catch (Exception ignored){}
-        return false;
+        return null;
     }
 
     enum MobType {

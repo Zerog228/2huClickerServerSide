@@ -162,6 +162,11 @@ public class UserDetailsImpl implements UserDetails {
         repo.save(user);
     }
 
+    public void increaseLocationLevel(UserRepository repo, int levels){
+        user.increaseLocationLevel(levels);
+        repo.save(user);
+    }
+
     public String getUpgrades(){
         return user.getUpgrades();
     }

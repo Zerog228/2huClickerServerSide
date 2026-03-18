@@ -109,6 +109,10 @@ public class User {
         this.location_level++;
     }
 
+    public void increaseLocationLevel(int levels){
+        this.location_level += levels;
+    }
+
     public boolean removeMoney(int amount){
         if(money >= amount){
             money -= amount;
