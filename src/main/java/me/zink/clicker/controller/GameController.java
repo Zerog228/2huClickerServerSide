@@ -191,12 +191,11 @@ public class GameController {
         //Only one check with them should be made to determine if data is modified or not
         // because the only thing that changes between mob kills is current_location_level.
         //Everything else synchronizes on mob kill or ability upgrade
-        if(saveProgressRequest.getCurrentMoney() == userDetails.getMoney()){
+        if(saveProgressRequest.getCurrentMoney() == userDetails.getMoney() && saveProgressRequest.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS() >= userDetails.getLocationLevel()){
             userDetails.increaseLocationLevel(repo, saveProgressRequest.getLocationLevel() - userDetails.getLocationLevel());
             return ResponseEntity.ok("Saved player");
         }else{
-            //TODO Add different checks based on different data and notify anti-cheat
-            //If difference is small enough than saving it won't hurt, right?
+            //TODO Add different checks based on different data. If difference is small enough than saving it won't hurt, right? (and notify anti-cheat)
             return ResponseEntity.badRequest().body("Player data was modified");
         }
     }
