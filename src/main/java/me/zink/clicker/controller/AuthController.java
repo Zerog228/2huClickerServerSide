@@ -1,19 +1,14 @@
 package me.zink.clicker.controller;
 
 import jakarta.validation.Valid;
-import me.zink.clicker.model.ERole;
-import me.zink.clicker.model.Role;
 import me.zink.clicker.model.User;
 import me.zink.clicker.payload.request.LoginRequest;
 import me.zink.clicker.payload.request.SignupRequest;
 import me.zink.clicker.payload.response.JwtResponse;
 import me.zink.clicker.payload.response.MessageResponse;
-import me.zink.clicker.repo.MobRepository;
-import me.zink.clicker.repo.RoleRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.jwt.JwtUtils;
 import me.zink.clicker.security.service.UserDetailsImpl;
-import me.zink.clicker.util.MobUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,9 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)

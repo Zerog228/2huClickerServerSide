@@ -21,7 +21,7 @@ public class MobUtils {
     /**
      * @return Returns a pair of if the mob was killed and new mob
      * */
-    public static Pair<Boolean, String> kill(UserRepository repo, UserDetailsImpl user){
+    /*public static Pair<Boolean, String> kill(UserRepository repo, UserDetailsImpl user){
         int loc_level = user.getLocationLevel();
         try{
             MobType type = MobType.valueOf(user.getLastMobName());
@@ -37,7 +37,7 @@ public class MobUtils {
             e.printStackTrace();
             return new Pair<>(false, null);
         }
-    }
+    }*/
 
     /**
      * Generates expected rewards based on mob list.

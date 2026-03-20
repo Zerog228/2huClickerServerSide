@@ -9,11 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import me.zink.clicker.repo.MobRepository;
-import me.zink.clicker.repo.UserRepository;
-import me.zink.clicker.util.MobUtils;
 import me.zink.clicker.util.Upgrade;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,13 +86,7 @@ public class User {
     @Setter
     private String upgrades;
     private int health;
-
-    //Location data
     private int location_level;
-
-    //Other
-    //Do I really need it?
-    //private String last_mob_name;
     private long mob_seed;
 
 
@@ -117,29 +107,8 @@ public class User {
         this.location_level = 1;
         this.upgrades = upgradesToString();
 
-        //this.last_mob_name = "";
+        this.mob_seed = new Random().nextLong();
     }
-
-    //Logic for mob lists
-    /*public void setCurrentMobs(List<Mob> mobs){
-        current_mobs = mobs;
-    }
-
-    public List<Mob> getCurrentMobs(){
-        return current_mobs;
-    }
-
-    public void setNextMobs(List<Mob> mobs){
-        next_mobs = mobs;
-    }*/
-
-    /*public boolean hasCurrentMobs(){
-        return !current_mobs.isEmpty();
-    }
-
-    public boolean hasNextMobs(){
-        return !next_mobs.isEmpty();
-    }*/
 
     public void addExp(int amount, int level_up_cost){
         exp += amount;
