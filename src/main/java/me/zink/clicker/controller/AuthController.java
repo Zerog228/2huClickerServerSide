@@ -8,10 +8,12 @@ import me.zink.clicker.payload.request.LoginRequest;
 import me.zink.clicker.payload.request.SignupRequest;
 import me.zink.clicker.payload.response.JwtResponse;
 import me.zink.clicker.payload.response.MessageResponse;
+import me.zink.clicker.repo.MobRepository;
 import me.zink.clicker.repo.RoleRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.jwt.JwtUtils;
 import me.zink.clicker.security.service.UserDetailsImpl;
+import me.zink.clicker.util.MobUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,8 +39,11 @@ public class AuthController {
     @Autowired
     UserRepository userRepository;
 
+    /*@Autowired
+    RoleRepository roleRepository;*/
+
     @Autowired
-    RoleRepository roleRepository;
+    MobRepository mobRepository;
 
     @Autowired
     PasswordEncoder encoder;
@@ -103,6 +108,11 @@ public class AuthController {
         User user = new User(signUpRequest.getUsername(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()));
+
+        //System.out.println("Has current: "+user.hasCurrentMobs());
+        //user.setCurrentMobs(UserDetailsImpl.getMobs(MobUtils.genMobsForLocation(1), mobRepository));
+        //user.setNextMobs(UserDetailsImpl.getMobs(MobUtils.genMobsForLocation(1 + MobUtils.getLOCATION_LEVELS_PER_BOSS()), mobRepository));
+        //System.out.println("Current mobs! "+user.getCurrent_mobs());
 
         /*Set<String> strRoles = signUpRequest.getRole();
         Set<Role> roles = new HashSet<>();

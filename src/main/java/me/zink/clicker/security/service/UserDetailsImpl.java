@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
+import me.zink.clicker.model.Mob;
 import me.zink.clicker.model.User;
+import me.zink.clicker.repo.MobRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.util.MobUtils;
 import me.zink.clicker.util.Upgrade;
@@ -61,44 +63,52 @@ public class UserDetailsImpl implements UserDetails {
                 );
     }
 
-    public void setLastMobName(UserRepository repo, String last_mob_name){
+    /*public void setLastMobName(UserRepository repo, String last_mob_name){
         user.setLast_mob_name(last_mob_name);
         repo.save(user);
     }
 
     public String getLastMobName(){
         return user.getLast_mob_name();
-    }
+    }*/
 
     public List<String> getCurrentLocationMobs(){
-        return user.getCurrent_location_mobs();
+        return user.getCurrentMobs().stream().map(mob -> mob.getType().name()).toList();
     }
 
-    public List<String> getOrGenCurrentLocationMobs(UserRepository repo){
-        user.setCurrent_location_mobs(MobUtils.genMobsForLocation(user.getLocation_level()));
-        repo.save(user);
+    public List<String> getOrGenCurrentLocationMobs(UserRepository repo, MobRepository mobRepo){
+        if(user.hasCurrentMobs()){
+            return user.getCurrentMobs().stream().map(mob -> mob.getType().name()).toList();
+        }else{
+            user.setCurrentMobs(getMobs(MobUtils.genMobsForLocation(user.getLocation_level()), mobRepo));
+            repo.save(user);
+        }
 
-        return user.getCurrent_location_mobs();
+        return user.getCurrentMobs().stream().map(mob -> mob.getType().name()).toList();
     }
 
-    public void setCurrentLocationMobs(UserRepository repo, List<String> current_location_mobs){
-        user.setCurrent_location_mobs(current_location_mobs);
+    public void setCurrentLocationMobs(UserRepository repo, MobRepository mobRepo, List<String> current_location_mobs){
+        user.setCurrentMobs(getMobs(current_location_mobs, mobRepo));
         repo.save(user);
     }
 
     public List<String> getNextLocationMobs(){
-        return user.getNext_location_mobs();
+        return user.getNext_mobs().stream().map(mob -> mob.getType().name()).toList();
     }
 
-    public List<String> getOrGenNextLocationMobs(UserRepository repo){
-        user.setNext_location_mobs(MobUtils.genMobsForLocation(user.getLocation_level() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
-        repo.save(user);
+    public List<String> getOrGenNextLocationMobs(UserRepository repo, MobRepository mobRepo){
+        if(user.hasNextMobs()){
+            return user.getNext_mobs().stream().map(mob -> mob.getType().name()).toList();
+        }else{
+            user.setNext_mobs(getMobs(MobUtils.genMobsForLocation(user.getLocation_level()), mobRepo));
+            repo.save(user);
+        }
 
-        return user.getNext_location_mobs();
+        return user.getNext_mobs().stream().map(mob -> mob.getType().name()).toList();
     }
 
-    public void setNextLocationMobs(UserRepository repo, List<String> next_location_mobs){
-        user.setNext_location_mobs(next_location_mobs);
+    public void setNextLocationMobs(UserRepository repo, MobRepository mobRepo, List<String> next_location_mobs){
+        user.setNextMobs(getMobs(next_location_mobs, mobRepo));
         repo.save(user);
     }
 
@@ -209,6 +219,20 @@ public class UserDetailsImpl implements UserDetails {
         }catch (Exception e){
             return Upgrade.Message.F_ABILITY_NOT_FOUND;
         }
+    }
+
+    public static List<Mob> getMobs(List<String> mobs, MobRepository mobRepository){
+        List<Mob> fillable = new ArrayList<>();
+        for(String mob_name : mobs){
+            try{
+                fillable.add(mobRepository.findByType(MobUtils.MobType.valueOf(mob_name)).orElse(null));
+            }catch (Exception ignored){
+                System.out.println("Mob not found from name "+mob_name);
+                //ignored.printStackTrace();
+                fillable.add(null);
+            }
+        }
+        return fillable;
     }
 
     @Override

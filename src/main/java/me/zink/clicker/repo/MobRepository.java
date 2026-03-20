@@ -1,0 +1,16 @@
+package me.zink.clicker.repo;
+
+import me.zink.clicker.model.ERole;
+import me.zink.clicker.model.Mob;
+import me.zink.clicker.model.Role;
+import me.zink.clicker.util.MobUtils;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface MobRepository extends JpaRepository<Mob, Long> {
+
+    Optional<Mob> findByType(MobUtils.MobType type);
+}

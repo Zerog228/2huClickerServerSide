@@ -92,7 +92,7 @@ public class MobUtils {
             type = getIndoorEnemies().get(new Random().nextInt(getIndoorEnemies().size()));
             return type.name();
         }else{ // Final location mobs and then boss
-
+            //TODO Generate mobs and boss for final location
         }
 
         //If none passes
@@ -159,7 +159,7 @@ public class MobUtils {
         return null;
     }
 
-    enum MobType {
+    public enum MobType {
         //Outdoor mobs
         DAIYOUSEI,
         STAR,

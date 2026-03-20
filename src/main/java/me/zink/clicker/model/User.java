@@ -9,8 +9,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import me.zink.clicker.repo.MobRepository;
 import me.zink.clicker.repo.UserRepository;
+import me.zink.clicker.util.MobUtils;
 import me.zink.clicker.util.Upgrade;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,10 +44,41 @@ public class User {
     private String password;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(  name = "user_roles",
+    @JoinTable(
+            name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<Role> roles = new HashSet<>();
+
+    //Mobs
+    /*@OneToMany(fetch = FetchType.LAZY, cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            })
+    @JoinTable(
+            name = "current_mobs",
+            joinColumns = {
+                    @JoinColumn(name = "user_id"),
+            },
+            inverseJoinColumns = @JoinColumn(name = "mob_value"),
+            foreignKey = @ForeignKey(name = "mob_index", value = ConstraintMode.NO_CONSTRAINT)
+    )
+    private List<Mob> current_mobs = new ArrayList<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = {
+            CascadeType.PERSIST,
+            CascadeType.MERGE
+    })
+    @JoinTable(
+            name = "next_mobs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "mob_id"),
+            indexes = {
+                    @Index(name = "mob_index", columnList = "mob_id")
+            }
+    )
+    private List<Mob> next_mobs = new ArrayList<>();*/
 
     //Player entity
     private int level;
@@ -61,9 +95,10 @@ public class User {
     private int location_level;
 
     //Other
-    private String last_mob_name;
-    private List<String> current_location_mobs;
-    private List<String> next_location_mobs;
+    //Do I really need it?
+    //private String last_mob_name;
+    private long mob_seed;
+
 
     public User() {
     }
@@ -82,8 +117,29 @@ public class User {
         this.location_level = 1;
         this.upgrades = upgradesToString();
 
-        this.last_mob_name = "";
+        //this.last_mob_name = "";
     }
+
+    //Logic for mob lists
+    /*public void setCurrentMobs(List<Mob> mobs){
+        current_mobs = mobs;
+    }
+
+    public List<Mob> getCurrentMobs(){
+        return current_mobs;
+    }
+
+    public void setNextMobs(List<Mob> mobs){
+        next_mobs = mobs;
+    }*/
+
+    /*public boolean hasCurrentMobs(){
+        return !current_mobs.isEmpty();
+    }
+
+    public boolean hasNextMobs(){
+        return !next_mobs.isEmpty();
+    }*/
 
     public void addExp(int amount, int level_up_cost){
         exp += amount;

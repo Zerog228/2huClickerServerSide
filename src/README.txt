@@ -3,3 +3,32 @@ These three commands should be used to setup roles in the db:
 INSERT INTO roles(name) VALUES('ROLE_USER');
 INSERT INTO roles(name) VALUES('ROLE_MODERATOR');
 INSERT INTO roles(name) VALUES('ROLE_ADMIN');
+
+INSERT INTO mobs(type) VALUES('DAIYOUSEI');
+INSERT INTO mobs(type) VALUES('STAR');
+INSERT INTO mobs(type) VALUES('LUNA');
+INSERT INTO mobs(type) VALUES('SUNNY');
+INSERT INTO mobs(type) VALUES('FAIRY');
+INSERT INTO mobs(type) VALUES('WRIGGLE');
+INSERT INTO mobs(type) VALUES('KAGEROU');
+
+INSERT INTO mobs(type) VALUES('KEDAMA');
+
+INSERT INTO mobs(type) VALUES('FAIRY_MAID_ONE');
+INSERT INTO mobs(type) VALUES('FAIRY_MAID_TWO');
+INSERT INTO mobs(type) VALUES('FAIRY_MAID_THREE');
+INSERT INTO mobs(type) VALUES('KOAKUMA');
+INSERT INTO mobs(type) VALUES('KOISHI');
+INSERT INTO mobs(type) VALUES('SATORI');
+
+INSERT INTO mobs(type) VALUES('RUMIA');
+INSERT INTO mobs(type) VALUES('CIRNO');
+INSERT INTO mobs(type) VALUES('MEILING');
+INSERT INTO mobs(type) VALUES('PATCHOULI');
+INSERT INTO mobs(type) VALUES('SAKUYA');
+INSERT INTO mobs(type) VALUES('REMILIA');
+INSERT INTO mobs(type) VALUES('FLANDRE');
+
+INSERT INTO mobs(type) VALUES('MIMA');
+
+INSERT INTO mobs(type) VALUES('NITORI');

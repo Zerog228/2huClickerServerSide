@@ -1,10 +1,12 @@
 package me.zink.clicker.controller;
 
 import jakarta.validation.Valid;
+import me.zink.clicker.model.Mob;
 import me.zink.clicker.payload.request.KillMobsRequest;
 import me.zink.clicker.payload.request.LoginRequest;
 import me.zink.clicker.payload.request.SaveProgressRequest;
 import me.zink.clicker.payload.request.UpgradeAbilityRequest;
+import me.zink.clicker.repo.MobRepository;
 import me.zink.clicker.util.MobUtils;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
@@ -27,6 +29,9 @@ public class GameController {
     @Autowired
     private UserRepository repo;
 
+    @Autowired
+    MobRepository mobRepository;
+
     /**
      * Method for getting mobs from server one by one.
      * Available only to admins because of it's inefficiency
@@ -47,8 +52,8 @@ public class GameController {
     @PreAuthorize("hasRole('USER')")
     public List<String> getMobs() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<String> mobs = new ArrayList<>(userDetails.getOrGenCurrentLocationMobs(repo));
-        mobs.addAll(userDetails.getOrGenNextLocationMobs(repo));
+        List<String> mobs = new ArrayList<>(userDetails.getOrGenCurrentLocationMobs(repo, mobRepository));
+        mobs.addAll(userDetails.getOrGenNextLocationMobs(repo, mobRepository));
         return mobs;
     }
 
@@ -56,7 +61,7 @@ public class GameController {
     @PreAuthorize("hasRole('USER')")
     public List<String> getCurrentMobs() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<String> mobs = userDetails.getOrGenCurrentLocationMobs(repo);
+        List<String> mobs = userDetails.getOrGenCurrentLocationMobs(repo, mobRepository);
 
         return mobs;
     }
@@ -65,7 +70,7 @@ public class GameController {
     @PreAuthorize("hasRole('USER')")
     public List<String> getNextMobs() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<String> mobs = userDetails.getOrGenNextLocationMobs(repo);
+        List<String> mobs = userDetails.getOrGenNextLocationMobs(repo, mobRepository);
 
         return mobs;
     }
@@ -76,8 +81,8 @@ public class GameController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> killMobs(@Valid @RequestBody KillMobsRequest killMobsRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<String> currentMobs = userDetails.getOrGenCurrentLocationMobs(repo);
-        List<String> futureMobs = userDetails.getOrGenNextLocationMobs(repo);
+        List<String> currentMobs = userDetails.getOrGenCurrentLocationMobs(repo, mobRepository);
+        List<String> futureMobs = userDetails.getOrGenNextLocationMobs(repo, mobRepository);
 
         //If everything synced properly
         if(killMobsRequest.getCurrentMobs().equals(currentMobs)){
@@ -100,8 +105,8 @@ public class GameController {
                 userDetails.addMoney(repo, Math.max(0, received_money - expected_money));
                 userDetails.addExp(repo, Math.max(0, received_exp - expected_exp));
                 //
-                userDetails.setCurrentLocationMobs(repo, futureMobs);
-                userDetails.setNextLocationMobs(repo, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+                userDetails.setCurrentLocationMobs(repo, mobRepository, futureMobs);
+                userDetails.setNextLocationMobs(repo, mobRepository, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
 
                 //Fill response. Money and EXP values are already fine
                 killMobsRequest.setCurrentMobs(futureMobs);
@@ -115,8 +120,8 @@ public class GameController {
                 userDetails.addMoney(repo, rewards.a);
                 userDetails.addExp(repo, rewards.b);
                 //
-                userDetails.setCurrentLocationMobs(repo, futureMobs);
-                userDetails.setNextLocationMobs(repo, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+                userDetails.setCurrentLocationMobs(repo, mobRepository, futureMobs);
+                userDetails.setNextLocationMobs(repo, mobRepository, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
 
                 //Fill response. Sync money and exp based on calculated server-side value
                 killMobsRequest.setCurrentEXP(userDetails.getExp());
@@ -148,8 +153,8 @@ public class GameController {
                 userDetails.addMoney(repo, Math.max(0, received_money - expected_money));
                 userDetails.addExp(repo, Math.max(0, received_exp - expected_exp));
                 //
-                userDetails.setCurrentLocationMobs(repo, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
-                userDetails.setNextLocationMobs(repo, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+                userDetails.setCurrentLocationMobs(repo, mobRepository, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+                userDetails.setNextLocationMobs(repo, mobRepository, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
 
                 //Fill response. Money and EXP values are already fine
                 killMobsRequest.setCurrentMobs(userDetails.getCurrentLocationMobs());
@@ -163,8 +168,8 @@ public class GameController {
                 userDetails.addMoney(repo, rewards_from_last_batch.a + rewards_from_current_batch.a);
                 userDetails.addExp(repo, rewards_from_last_batch.b + rewards_from_current_batch.b);
                 //
-                userDetails.setCurrentLocationMobs(repo, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
-                userDetails.setNextLocationMobs(repo, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+                userDetails.setCurrentLocationMobs(repo, mobRepository, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
+                userDetails.setNextLocationMobs(repo, mobRepository, MobUtils.genMobsForLocation(userDetails.getLocationLevel() + MobUtils.getLOCATION_LEVELS_PER_BOSS() + MobUtils.getLOCATION_LEVELS_PER_BOSS()));
 
                 //Fill response. Sync money and exp based on calculated server-side value
                 killMobsRequest.setCurrentEXP(userDetails.getExp());
@@ -233,4 +238,16 @@ public class GameController {
             return new Pair<>(false, Upgrade.Message.F_ABILITY_NOT_FOUND.getMessage());
         }
     }*/
+
+    public List<Mob> getMobs(List<String> mobs){
+        List<Mob> fillable = new ArrayList<>();
+        for(String mob_name : mobs){
+            try{
+                fillable.add(mobRepository.findByType(MobUtils.MobType.valueOf(mob_name)).orElse(null));
+            }catch (Exception ignored){
+                fillable.add(null);
+            }
+        }
+        return fillable;
+    }
 }
