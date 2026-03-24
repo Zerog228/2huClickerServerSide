@@ -59,8 +59,8 @@ public class AuthController {
                     if(info != null && info.length() > 24){
                         info = "null";
                     }
-                    long serverTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
-                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), info, (int) actionMap.get("location"), serverTimestamp, (long) actionMap.get("clientTimestamp"));
+                    long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
+                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), info, (int) actionMap.get("location"), estimatedTimestamp, (long) actionMap.get("clientTimestamp"));
                     userDetails.addAction(userRepository, action);
                 }catch (Exception e){
                     e.printStackTrace();

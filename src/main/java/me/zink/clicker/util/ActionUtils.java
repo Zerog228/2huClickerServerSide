@@ -109,8 +109,12 @@ public class ActionUtils {
         return ((upgrade_level + 1) * upgrade.getCost() + upgrade_level * upgrade.getAdditionalCostPerLevel());
     }
 
+    /**
+     * Calculates estimated time on server based on initial time of server/client and current time of action on client
+     * @return Estimated time in range -> [serverBase; currentTimeMills()]
+     * */
     public static long calcSTime(long serverBase, long clientBase, long clientCurrent){
-        return serverBase + clientCurrent - clientBase;
+        return Math.max(Math.min(serverBase + clientCurrent - clientBase, System.currentTimeMillis()), serverBase);
     }
 
     private record UpgradeAction(Upgrade upgrade, Action action) {}

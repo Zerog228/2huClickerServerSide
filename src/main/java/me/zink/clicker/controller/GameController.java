@@ -34,8 +34,8 @@ public class GameController {
             for(int i = userDetails.getActions().size(); i < saveProgressRequest.getActions().size(); i++){
                 try{
                     Map<String, Object> actionMap = saveProgressRequest.getActions().get(i);
-                    long serverTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
-                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), (String) actionMap.get("info"), (int) actionMap.get("location"), serverTimestamp, (long) actionMap.get("clientTimestamp"));
+                    long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
+                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), (String) actionMap.get("info"), (int) actionMap.get("location"), estimatedTimestamp, (long) actionMap.get("clientTimestamp"));
                     userDetails.addAction(userRepository, action);
                 }catch (Exception e){
                     e.printStackTrace();

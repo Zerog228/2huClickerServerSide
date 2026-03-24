@@ -83,49 +83,6 @@ public class UserDetailsImpl implements UserDetails {
         return user.getLocation_level();
     }
 
-    public void increaseLocationLevel(UserRepository repo){
-        user.increaseLocationLevel();
-        repo.save(user);
-    }
-
-    public void increaseLocationLevel(UserRepository repo, int levels){
-        user.increaseLocationLevel(levels);
-        repo.save(user);
-    }
-
-    public void setLocationLevel(UserRepository repo, int location_level){
-        user.setLocationLevel(location_level);
-        repo.save(user);
-    }
-
-    //Upgrades
-    /*public static String upgradesToString(Map<Upgrade, Integer> upgrades){
-        return new Gson().toJson(upgrades, new TypeToken<Map<Upgrade, Integer>>() {}.getType());
-    }
-
-    public static HashMap<Upgrade, Integer> stringToUpgrades(String upgrades){
-        return new Gson().fromJson(upgrades, new TypeToken<Map<Upgrade, Integer>>(){}.getType());
-    }
-
-    public Upgrade.Message upgradeAbility(UserRepository repo, Upgrade upgradeType){
-        try {
-            int upgrade_level = upgrades.getOrDefault(upgradeType, 0);
-            if(upgrade_level < upgradeType.getMaxLevel()){
-                if (removeMoney(repo, (upgrade_level + 1) * levelUpCost() + upgrade_level * upgradeType.getAdditionalCostPerLevel())) {
-                    upgrades.put(upgradeType, ++upgrade_level);
-                    setUpgrades(repo, upgradesToString(upgrades));
-                    return Upgrade.Message.SUCCESS;
-                } else {
-                    return Upgrade.Message.F_NOT_ENOUGH_MONEY;
-                }
-            }else {
-                return Upgrade.Message.F_MAX_LEVEL;
-            }
-        }catch (Exception e){
-            return Upgrade.Message.F_ABILITY_NOT_FOUND;
-        }
-    }*/
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
