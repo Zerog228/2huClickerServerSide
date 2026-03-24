@@ -1,26 +1,26 @@
 package me.zink.clicker.controller;
 
 import jakarta.validation.Valid;
-import me.zink.clicker.model.User;
+import me.zink.clicker.model.*;
 import me.zink.clicker.payload.request.LoginRequest;
 import me.zink.clicker.payload.request.SignupRequest;
 import me.zink.clicker.payload.response.JwtResponse;
 import me.zink.clicker.payload.response.MessageResponse;
+import me.zink.clicker.repo.RoleRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.jwt.JwtUtils;
 import me.zink.clicker.security.service.UserDetailsImpl;
+import me.zink.clicker.util.ActionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -32,11 +32,8 @@ public class AuthController {
     @Autowired
     UserRepository userRepository;
 
-    /*@Autowired
-    RoleRepository roleRepository;*/
-
     @Autowired
-    MobRepository mobRepository;
+    RoleRepository roleRepository;
 
     @Autowired
     PasswordEncoder encoder;
@@ -44,9 +41,8 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
-    @PostMapping("/signin")
+    @PostMapping(value = "/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -54,25 +50,31 @@ public class AuthController {
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                roles,
+        if(loginRequest.getActions() != null && loginRequest.getActions().size() > userDetails.getActions().size()){
+            for(int i = userDetails.getActions().size(); i < loginRequest.getActions().size(); i++){
+                try{
+                    Map<String, Object> actionMap = loginRequest.getActions().get(i);
+                    String info = (String) actionMap.get("info");
+                    if(info != null && info.length() > 24){
+                        info = "null";
+                    }
+                    long serverTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
+                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), info, (int) actionMap.get("location"), serverTimestamp, (long) actionMap.get("clientTimestamp"));
+                    userDetails.addAction(userRepository, action);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return ResponseEntity.ok(new JwtResponse(
+                jwt,
 
                 //PlayerData
                 userDetails.getLocationLevel(),
-                userDetails.getLevel(),
-                userDetails.getUpgradePoints(),
-                userDetails.getExp(),
-                userDetails.getMoney(),
-                userDetails.getBombs(),
-                userDetails.getHealth(),
-                userDetails.getUpgrades()
+                userDetails.getMobSeed(),
+                userDetails.getActions()
                 ));
     }
 
@@ -98,46 +100,13 @@ public class AuthController {
 
         // Create new user's account
         //TODO Verify username and password length
-        User user = new User(signUpRequest.getUsername(),
+        User user = new User(
+                signUpRequest.getUsername(),
                 signUpRequest.getEmail(),
-                encoder.encode(signUpRequest.getPassword()));
-
-        //System.out.println("Has current: "+user.hasCurrentMobs());
-        //user.setCurrentMobs(UserDetailsImpl.getMobs(MobUtils.genMobsForLocation(1), mobRepository));
-        //user.setNextMobs(UserDetailsImpl.getMobs(MobUtils.genMobsForLocation(1 + MobUtils.getLOCATION_LEVELS_PER_BOSS()), mobRepository));
-        //System.out.println("Current mobs! "+user.getCurrent_mobs());
-
-        /*Set<String> strRoles = signUpRequest.getRole();
-        Set<Role> roles = new HashSet<>();
-
-        if (strRoles == null) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role) {
-                    case "admin":
-                        Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
-
-                        break;
-                    case "mod":
-                        Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(modRole);
-
-                        break;
-                    default:
-                        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                }
-            });
-        }
-
-        user.setRoles(roles);*/
+                encoder.encode(signUpRequest.getPassword())
+        );
+        user.addAction(new Action(EAction.INIT, "null", 1, System.currentTimeMillis(), signUpRequest.getTimestamp()));
+        user.setRoles(new HashSet<>(Collections.singletonList(roleRepository.findByName(ERole.ROLE_USER).orElseThrow(() -> new RuntimeException("Role 'USER' not found!")))));
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));

@@ -14,104 +14,42 @@ import static me.zink.clicker.util.IntercontinentalMobInfo.*;
 
 public class MobUtils {
 
-    private static final int LEVEL_HP_MULT = 10;
     @Getter
     private static final int LOCATION_LEVELS_PER_BOSS = 20;
 
-    /**
-     * @return Returns a pair of if the mob was killed and new mob
-     * */
-    /*public static Pair<Boolean, String> kill(UserRepository repo, UserDetailsImpl user){
-        int loc_level = user.getLocationLevel();
-        try{
-            MobType type = MobType.valueOf(user.getLastMobName());
-            user.addExp(repo, (int) (user.getExpMult() * getTrueLocLevel(loc_level) * type.getExpMult()));
-            user.addMoney(repo, (int) (user.getMoneyMult() * getTrueLocLevel(loc_level) * type.getMoneyMult()));
-
-            //Increase loc level, set new mob type
-            user.increaseLocationLevel(repo);
-            user.setLastMobName(repo, genType(user.getLocationLevel()));
-            return new Pair<>(true, user.getLastMobName());
-        }catch (Exception e){
-            System.out.println("Failed to kill a mob! Mob type does not exist!");
-            e.printStackTrace();
-            return new Pair<>(false, null);
-        }
-    }*/
-
-    /**
-     * Generates expected rewards based on mob list.
-     * If mob does not exist then rewards for it will be set to 0
-     * @param mobs Mobs to kill
-     * @return Pair of MONEY and EXP
-     * */
-    public static Pair<Integer, Integer> getRewards(List<String> mobs, UserDetailsImpl userDetails){
-        return getRewards(mobs, userDetails, userDetails.getLocationLevel());
-    }
-
-    /**
-     * Generates expected rewards based on mob list.
-     * If mob does not exist then rewards for it will be set to 0
-     * @param mobs Mobs to kill
-     * @return Pair of MONEY and EXP
-     * */
-    public static Pair<Integer, Integer> getRewards(List<String> mobs, UserDetailsImpl userDetails, int location_level){
-        final double EXP_MULT = userDetails.getExpMult(), MONEY_MULT = userDetails.getMoneyMult();
-        int money_reward = 0, exp_reward = 0;
-
-        final int TRUE_LOCATION_LEVEL = getTrueLocLevel(location_level);
-
-        for(String mob_name : mobs){
-            MobType mob = getMob(mob_name);
-            if(mob != null){
-                money_reward += (int) (mob.getMoneyMult() * MONEY_MULT * TRUE_LOCATION_LEVEL);
-                exp_reward += (int) (mob.getExpMult() * EXP_MULT * TRUE_LOCATION_LEVEL);
-            }
-        }
-
-        return new Pair<>(money_reward, exp_reward);
-    }
-
-    private static int getTrueLocLevel(int locationLevel){
+    public static int getTrueLocLevel(int locationLevel){
         return (int) (locationLevel / LOCATION_LEVELS_PER_BOSS) + 1;
     }
 
-    public static String genType(int locationLevel){
-        MobType type;
-        //Check if boss
-        if(locationLevel % LOCATION_LEVELS_PER_BOSS == 0){
-            type = getBoss(locationLevel);
-            return type.name();
-        }
+    public static List<MobType> genMobs(int location_level, long seed){
+        List<MobType> mobs = new ArrayList<>(location_level);
+        Random rand = new Random(seed);
+        for(int current_location = 1; current_location <= location_level; current_location++){
+            //If boss
+            if(current_location % LOCATION_LEVELS_PER_BOSS == 0){
+                mobs.add(getBoss(current_location));
+                continue;
+            }
 
-        //Indoor or Outdoor. First 3 bosses will be outdoor, other 4 - indoor
-        if(locationLevel < LOCATION_LEVELS_PER_BOSS * 3){
-            type = getOutdoorEnemies().get(new Random().nextInt(getOutdoorEnemies().size()));
-            return type.name();
-        }else if(locationLevel < LOCATION_LEVELS_PER_BOSS * 7){
-            type = getIndoorEnemies().get(new Random().nextInt(getIndoorEnemies().size()));
-            return type.name();
-        }else{ // Final location mobs and then boss
-            //TODO Generate mobs and boss for final location
-        }
+            //Indoor or Outdoor. First 3 bosses will be outdoor, other 4 - indoor
+            if(current_location < LOCATION_LEVELS_PER_BOSS * 3){
+                mobs.add(getOutdoorEnemies().get(rand.nextInt(getOutdoorEnemies().size())));
+                continue;
+            }else if(current_location < LOCATION_LEVELS_PER_BOSS * 7){
+                mobs.add(getIndoorEnemies().get(rand.nextInt(getIndoorEnemies().size())));
+                continue;
+            }
 
-        //If none passes
-        //CAN BE DANGEROUS BECAUSE OF THE NPCs and bosses? Maybe not really.
-        type = MobType.values()[new Random().nextInt(MobType.values().length)];
-        return type.name();
-    }
-
-    /**
-     * Automatically decides player's REAL location level and generates list of 'LOCATION_LEVELS_PER_BOSS' mobs for it.
-     * Note that there will always be boss at the end
-     * */
-    public static List<String> genMobsForLocation(int location){
-        int realLocation = location / LOCATION_LEVELS_PER_BOSS; //1 2 3 4 5 6
-        List<String> mobIds = new ArrayList<>(LOCATION_LEVELS_PER_BOSS);
-        for(int i = realLocation * LOCATION_LEVELS_PER_BOSS + 1; i <= realLocation * LOCATION_LEVELS_PER_BOSS + LOCATION_LEVELS_PER_BOSS; i++){
-            mobIds.add(genType(i));
+            //If none passes
+            MobType type = MobType.values()[rand.nextInt(MobType.values().length)];
+            mobs.add(type);
+            if(type == MobType.MIMA){
+                return mobs;
+            }
         }
-        return mobIds;
+        mobs.add(MobType.MIMA);
+
+        return mobs;
     }
 
     private static List<MobType> getOutdoorEnemies(){
@@ -120,10 +58,6 @@ public class MobUtils {
 
     private static List<MobType> getIndoorEnemies(){
         return List.of(MobType.KEDAMA, MobType.FAIRY_MAID_ONE, MobType.FAIRY_MAID_TWO, MobType.FAIRY_MAID_THREE, MobType.KOAKUMA);
-    }
-
-    private static List<MobType> getAllBosses(){
-        return List.of(MobType.RUMIA, MobType.CIRNO, MobType.MEILING, MobType.PATCHOULI, MobType.SAKUYA, MobType.REMILIA, MobType.FLANDRE, MobType.MIMA);
     }
 
     private static MobType getBoss(int locationLevel){

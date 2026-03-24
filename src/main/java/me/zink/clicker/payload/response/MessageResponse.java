@@ -1,8 +1,10 @@
 package me.zink.clicker.payload.response;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class MessageResponse {
     private String message;
 

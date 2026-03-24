@@ -26,9 +26,9 @@ public class TestController {
     @GetMapping("/user")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public String userAccess() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        userDetails.addExp(repo, 1);
-        System.out.println(userDetails.getExp());
+        //UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //userDetails.addExp(repo, 1);
+        //System.out.println(userDetails.getExp());
 
         return "User Content.";
     }

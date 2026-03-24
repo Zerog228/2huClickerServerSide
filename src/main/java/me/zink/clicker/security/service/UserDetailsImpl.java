@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
+import me.zink.clicker.model.Action;
 import me.zink.clicker.model.User;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.util.MobUtils;
@@ -17,7 +18,6 @@ import java.util.stream.Collectors;
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
-    //TODO Я могу сохранять данные юзеров не при каждой операции, а раз в определённое время
     @Getter
     private Long id;
     private String username;
@@ -29,10 +29,6 @@ public class UserDetailsImpl implements UserDetails {
 
     private User user;
 
-    //Player data
-    private static final int LEVEL_INCREASE_COST_MULT = 20;
-    private Map<Upgrade, Integer> upgrades;
-
     public UserDetailsImpl(Long id, String username, String email, String password, Collection<? extends GrantedAuthority> authorities,
                           User user) {
         this.id = id;
@@ -42,7 +38,6 @@ public class UserDetailsImpl implements UserDetails {
         this.authorities = authorities;
 
         this.user = user;
-        this.upgrades = stringToUpgrades(user.getUpgrades());
     }
 
     public static UserDetailsImpl build(User user) {
@@ -61,55 +56,27 @@ public class UserDetailsImpl implements UserDetails {
         );
     }
 
-    public int getExp(){
-        return user.getExp();
+    public long getMobSeed(){
+        return user.getMob_seed();
     }
 
-    public void addExp(UserRepository repo, int amount){
-        user.addExp(amount, LEVEL_INCREASE_COST_MULT);
+    public List<Action> getActions(){
+        return user.getActions();
+    }
+
+    public void setActions(UserRepository repo, List<Action> actions){
+        user.setActions(actions);
         repo.save(user);
     }
 
-    public int getLevel(){
-        return user.getLevel();
-    }
-
-    private void increaseLevel(UserRepository repo){
-        user.increaseLevel();
+    public void addAction(UserRepository repo, Action action){
+        user.addAction(action);
         repo.save(user);
     }
 
-    public int getUpgradePoints(){
-        return user.getUpgrade_points();
-    }
-
-    public int levelUpCost(){
-        return user.levelUpCost(LEVEL_INCREASE_COST_MULT);
-    }
-
-    public int getMoney() {
-        return user.getMoney();
-    }
-
-    public void addMoney(UserRepository repo, int amount){
-        user.addMoney(amount);
+    public void addAction(UserRepository repo, List<Action> actions){
+        user.addAction(actions);
         repo.save(user);
-    }
-
-    public boolean removeMoney(UserRepository repo, int amount){
-        boolean removed = user.removeMoney(amount);
-        if(removed){
-            repo.save(user);
-        }
-        return removed;
-    }
-
-    public int getBombs(){
-        return user.getBombs();
-    }
-
-    public int getHealth(){
-        return user.getHealth();
     }
 
     public int getLocationLevel(){
@@ -126,24 +93,13 @@ public class UserDetailsImpl implements UserDetails {
         repo.save(user);
     }
 
-    public String getUpgrades(){
-        return user.getUpgrades();
-    }
-
-    public void setUpgrades(UserRepository repo, String upgrades){
-        user.setUpgrades(upgrades);
+    public void setLocationLevel(UserRepository repo, int location_level){
+        user.setLocationLevel(location_level);
         repo.save(user);
     }
 
-    public float getMoneyMult() {
-        return 1 + (this.upgrades.get(Upgrade.MORE_MONEY) * Upgrade.MORE_MONEY.getAbilityPower());
-    }
-
-    public float getExpMult() {
-        return 1 + (this.upgrades.get(Upgrade.MORE_EXP) * Upgrade.MORE_EXP.getAbilityPower());
-    }
-
-    public static String upgradesToString(Map<Upgrade, Integer> upgrades){
+    //Upgrades
+    /*public static String upgradesToString(Map<Upgrade, Integer> upgrades){
         return new Gson().toJson(upgrades, new TypeToken<Map<Upgrade, Integer>>() {}.getType());
     }
 
@@ -168,20 +124,6 @@ public class UserDetailsImpl implements UserDetails {
         }catch (Exception e){
             return Upgrade.Message.F_ABILITY_NOT_FOUND;
         }
-    }
-
-    /*public static List<Mob> getMobs(List<String> mobs, MobRepository mobRepository){
-        List<Mob> fillable = new ArrayList<>();
-        for(String mob_name : mobs){
-            try{
-                fillable.add(mobRepository.findByType(MobUtils.MobType.valueOf(mob_name)).orElse(null));
-            }catch (Exception ignored){
-                System.out.println("Mob not found from name "+mob_name);
-                //ignored.printStackTrace();
-                fillable.add(null);
-            }
-        }
-        return fillable;
     }*/
 
     @Override

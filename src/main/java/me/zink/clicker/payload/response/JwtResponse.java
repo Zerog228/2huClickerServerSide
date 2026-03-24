@@ -3,63 +3,29 @@ package me.zink.clicker.payload.response;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import me.zink.clicker.model.Action;
 
-import java.util.HashMap;
 import java.util.List;
 
+@Getter
+@Setter
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
-    @Setter
-    @Getter
-    private Long id;
-    @Getter
-    @Setter
-    private String username;
-    @Setter
-    @Getter
-    private String email;
-    @Getter
-    private List<String> roles;
 
     //Player entity
-    @Getter
-    private int level, upgrade_points, exp, money, bombs, health, location_level;
-    @Getter
-    private String abilities_map;
+    private int location_level;
+    private List<Action> actions;
 
-    public JwtResponse(String accessToken, Long id, String username, String email, List<String> roles,
-                      int location_level, int level, int upgrade_points, int exp, int money, int bombs, int health, String abilities_map) {
+    //Mob info
+    private long mob_seed;
+
+    public JwtResponse(String accessToken, int location_level, long mob_seed, List<Action> actions) {
         this.token = accessToken;
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.roles = roles;
 
         //Game data
         this.location_level = location_level;
-        this.level = level;
-        this.upgrade_points = upgrade_points;
-        this.exp = exp;
-        this.money = money;
-        this.bombs = bombs;
-        this.health = health;
-        this.abilities_map = abilities_map;
-    }
-
-    public String getAccessToken() {
-        return token;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.token = accessToken;
-    }
-
-    public String getTokenType() {
-        return type;
-    }
-
-    public void setTokenType(String tokenType) {
-        this.type = tokenType;
+        this.mob_seed = mob_seed;
+        this.actions = actions;
     }
 }

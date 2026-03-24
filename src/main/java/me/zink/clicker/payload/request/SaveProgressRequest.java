@@ -1,35 +1,23 @@
 package me.zink.clicker.payload.request;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import me.zink.clicker.model.Action;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Setter
 public class SaveProgressRequest {
 
     @NotBlank
-    private int currentMoney;
-
-    @NotBlank
-    private int currentEXP;
-
-    @NotBlank
-    private String upgrades;
-
-    @NotBlank
-    private int bombs;
-
-    @NotBlank
-    private int health;
-
-    @NotBlank
-    private int upgradePoints;
+    private List<Map<String, Object>> actions;
 
     @NotBlank
     private int locationLevel;
-
-    @NotBlank
-    private int playerLevel;
 
 }
