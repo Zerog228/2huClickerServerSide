@@ -25,7 +25,6 @@ public class SignupRequest {
     @Size(min = 8, max = 40)
     private String password;
 
-    @Getter
     @NotBlank
     @Size(max = 24)
     private long timestamp;

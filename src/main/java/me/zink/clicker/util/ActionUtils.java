@@ -3,6 +3,7 @@ package me.zink.clicker.util;
 import lombok.Getter;
 import me.zink.clicker.model.Action;
 import me.zink.clicker.model.EAction;
+import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
 
 import java.util.*;
@@ -53,11 +54,11 @@ public class ActionUtils {
                             money -= calcUpgradeCost(Upgrade.LONGER_STICK, longerStickLevel++);
                         }
 
-                        //Compare timestamps
-                    /*long currentTimeDiff = upgrade.action.getClientTimestamp() - upgrade.action.getServerTimestamp();
-                    if(Math.abs(currentTimeDiff - timeDiff) > MAX_TIME_DIFF_MILLS){
-                        cheat_rate += 0.01f;
-                    }*/
+                        //Checking time manipulations by comparing timestamps
+                        long currentTimeDiff = upgrade.action.getClientTimestamp() - upgrade.action.getServerTimestamp();
+                        if (Math.abs(currentTimeDiff - timeDiff) > MAX_TIME_DIFF_MILLS) {
+                            cheat_rate += 0.01f;
+                        }
                     }
                 }
 
@@ -117,5 +118,34 @@ public class ActionUtils {
         return Math.max(Math.min(serverBase + clientCurrent - clientBase, System.currentTimeMillis()), serverBase);
     }
 
+    /**
+     * Calculate time between killing first 7 bosses.
+     * Useful for discovering auto-clickers
+     * */
+    public static List<Float> calcTimeBetweenBosses(){
+        return null;
+    }
+
+    /**
+     * Calculate estimated final time based on given mobs and amount of clicks per second
+     * */
+    public static float estimateFinalTime(){
+        return 0;
+    }
+
+    public static void updateActionList(UserRepository userRepository, UserDetailsImpl userDetails, List<Map<String, Object>> comparedActions){
+        if(comparedActions != null && comparedActions.size() > userDetails.getActions().size()){
+            for(int i = userDetails.getActions().size(); i < comparedActions.size(); i++){
+                try{
+                    Map<String, Object> actionMap = comparedActions.get(i);
+                    long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), Long.parseLong((String) actionMap.get("clientTimestamp")));
+                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), (String) actionMap.get("info"), Integer.parseInt((String) actionMap.get("location")), estimatedTimestamp, Long.parseLong((String) actionMap.get("clientTimestamp")));
+                    userDetails.addAction(userRepository, action);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
     private record UpgradeAction(Upgrade upgrade, Action action) {}
 }

@@ -83,6 +83,11 @@ public class UserDetailsImpl implements UserDetails {
         return user.getLocation_level();
     }
 
+    public void setLocationLevel(UserRepository repo, int location_level){
+        user.setLocationLevel(location_level);
+        repo.save(user);
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;

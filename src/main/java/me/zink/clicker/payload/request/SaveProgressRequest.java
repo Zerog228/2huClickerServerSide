@@ -1,23 +1,28 @@
 package me.zink.clicker.payload.request;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import me.zink.clicker.model.Action;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Getter
 @Setter
 public class SaveProgressRequest {
 
     @NotBlank
-    private List<Map<String, Object>> actions;
+    @Size(min = 1, max = 20)
+    private int location_level;
 
     @NotBlank
-    private int locationLevel;
+    private String actions;
+
+    public List<Map<String, Object>> getActions(){
+        return new Gson().fromJson(actions, new TypeToken<List<Map<String, Object>>>(){}.getType());
+    }
 
 }

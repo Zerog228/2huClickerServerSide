@@ -51,21 +51,9 @@ public class AuthController {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        if(loginRequest.getActions() != null && loginRequest.getActions().size() > userDetails.getActions().size()){
-            for(int i = userDetails.getActions().size(); i < loginRequest.getActions().size(); i++){
-                try{
-                    Map<String, Object> actionMap = loginRequest.getActions().get(i);
-                    String info = (String) actionMap.get("info");
-                    if(info != null && info.length() > 24){
-                        info = "null";
-                    }
-                    long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
-                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), info, (int) actionMap.get("location"), estimatedTimestamp, (long) actionMap.get("clientTimestamp"));
-                    userDetails.addAction(userRepository, action);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
+        ActionUtils.updateActionList(userRepository, userDetails, loginRequest.getActions());
+        if(userDetails.getLocationLevel() < loginRequest.getLocationLevel()){
+            userDetails.setLocationLevel(userRepository, loginRequest.getLocationLevel());
         }
 
         return ResponseEntity.ok(new JwtResponse(

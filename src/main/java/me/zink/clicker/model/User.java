@@ -48,7 +48,7 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
     //Actions
-    @OneToMany(fetch = FetchType.LAZY, cascade = {
+    @OneToMany(fetch = FetchType.EAGER, cascade = {
                     CascadeType.PERSIST,
                     CascadeType.MERGE
             })
@@ -100,6 +100,9 @@ public class User {
     }
 
     public void setLocationLevel(int location_level){
+        if(location_level <= 0){
+            location_level = 1;
+        }
         this.location_level = location_level;
     }
 }

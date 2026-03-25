@@ -14,18 +14,18 @@ public class JwtResponse {
     private String type = "Bearer";
 
     //Player entity
-    private int location_level;
+    private String location_level;
     private List<Action> actions;
 
     //Mob info
-    private long mob_seed;
+    private String mob_seed;
 
     public JwtResponse(String accessToken, int location_level, long mob_seed, List<Action> actions) {
         this.token = accessToken;
 
         //Game data
-        this.location_level = location_level;
-        this.mob_seed = mob_seed;
+        this.location_level = String.valueOf(location_level);
+        this.mob_seed = String.valueOf(mob_seed);
         this.actions = actions;
     }
 }

@@ -15,11 +15,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import static me.zink.clicker.util.ActionUtils.updateActionList;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/game")
+@RequestMapping(value = "/api/game", method = {
+        RequestMethod.GET, RequestMethod.POST
+})
 public class GameController {
 
     @Autowired
@@ -27,20 +29,12 @@ public class GameController {
 
     @GetMapping("/save")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> save(@Valid @RequestBody SaveProgressRequest saveProgressRequest) {
+    public @ResponseBody ResponseEntity<?> save(@Valid @RequestBody SaveProgressRequest saveProgressRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if(saveProgressRequest.getActions() != null && saveProgressRequest.getActions().size() > userDetails.getActions().size()){
-            for(int i = userDetails.getActions().size(); i < saveProgressRequest.getActions().size(); i++){
-                try{
-                    Map<String, Object> actionMap = saveProgressRequest.getActions().get(i);
-                    long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), (long) actionMap.get("clientTimestamp"));
-                    Action action = new Action(EAction.valueOf((String) actionMap.get("action")), (String) actionMap.get("info"), (int) actionMap.get("location"), estimatedTimestamp, (long) actionMap.get("clientTimestamp"));
-                    userDetails.addAction(userRepository, action);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
+        updateActionList(userRepository, userDetails, saveProgressRequest.getActions());
+        if(saveProgressRequest.getLocation_level() > userDetails.getLocationLevel()){
+            userDetails.setLocationLevel(userRepository, saveProgressRequest.getLocation_level());
         }
 
         return ResponseEntity.ok().build();
@@ -48,29 +42,42 @@ public class GameController {
 
     @GetMapping("/upgrade")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> upgrade(@Valid @RequestBody UpgradeAbilityRequest upgradeAbilityRequest) {
+    public @ResponseBody ResponseEntity<?> upgrade(@Valid @RequestBody UpgradeAbilityRequest upgradeAbilityRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        ActionUtils.updateActionList(userRepository, userDetails, upgradeAbilityRequest.getActions());
 
         Action action = new Action(EAction.UPGRADE, upgradeAbilityRequest.getAbility(), upgradeAbilityRequest.getLocation_level(), System.currentTimeMillis(), upgradeAbilityRequest.getTimestamp());
         userDetails.addAction(userRepository, action);
+
+        if(upgradeAbilityRequest.getLocation_level() > userDetails.getLocationLevel()){
+            userDetails.setLocationLevel(userRepository, upgradeAbilityRequest.getLocation_level());
+        }
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/boss")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> killBoss(@Valid @RequestBody KillBossRequest killBossRequest) {
+    public @ResponseBody ResponseEntity<?> killBoss(@Valid @RequestBody KillBossRequest killBossRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        ActionUtils.updateActionList(userRepository, userDetails, killBossRequest.getActions());
+
 
         Action action = new Action(EAction.KILL_BOSS, "null", killBossRequest.getLocation_level(), System.currentTimeMillis(), killBossRequest.getTimestamp());
         userDetails.addAction(userRepository, action);
+
+        if(killBossRequest.getLocation_level() + 1 > userDetails.getLocationLevel()){
+            userDetails.setLocationLevel(userRepository, killBossRequest.getLocation_level() + 1);
+        }
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/delete")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> delete(@Valid @RequestBody UpgradeAbilityRequest upgradeAbilityRequest) {
+    public @ResponseBody ResponseEntity<?> delete(@Valid @RequestBody UpgradeAbilityRequest upgradeAbilityRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         //TODO Delete user
