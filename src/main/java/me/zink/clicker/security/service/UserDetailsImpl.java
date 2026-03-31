@@ -60,6 +60,11 @@ public class UserDetailsImpl implements UserDetails {
         return user.getMob_seed();
     }
 
+    public void genMobSeed(UserRepository repository){
+        user.setMob_seed(new Random().nextLong());
+        repository.save(user);
+    }
+
     public List<Action> getActions(){
         return user.getActions();
     }

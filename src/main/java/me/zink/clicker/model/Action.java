@@ -37,19 +37,14 @@ public class Action {
     @Column(length = 3)
     private int location;
 
+    @Getter
+    @Setter
+    @Column(length = 3)
+    private long user_id;
+
     public Action() {
 
     }
-
-    public Action(Action action, long clientTimestamp, long serverTimestamp) {
-        this.action = action.getAction();
-        this.location = action.getLocation();
-        this.info = action.getInfo();
-
-        this.clientTimestamp = clientTimestamp;
-        this.serverTimestamp = serverTimestamp;
-    }
-
     public Action(EAction action, String info, int location, long serverTimestamp, long clientTimestamp) {
         this.action = action;
         this.info = info;

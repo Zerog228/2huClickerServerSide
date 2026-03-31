@@ -1,5 +1,6 @@
 package me.zink.clicker.controller;
 
+import me.zink.clicker.repo.ActionRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +19,12 @@ public class TestController {
     @Autowired
     private UserRepository repo;
 
+    @Autowired
+    private ActionRepository actionRepository;
+
     @GetMapping("/all")
     public String allAccess() {
-        return "Public Content.";
+        return actionRepository.findById(2).get().getAction().name();
     }
 
     @GetMapping("/user")

@@ -1,6 +1,5 @@
 package me.zink.clicker.util;
 
-import lombok.Getter;
 import me.zink.clicker.model.Action;
 import me.zink.clicker.model.EAction;
 import me.zink.clicker.repo.UserRepository;
@@ -11,6 +10,7 @@ import java.util.*;
 import static me.zink.clicker.util.MobUtils.getTrueLocLevel;
 
 public class ActionUtils {
+
     /**
      * When account registered timestamp is created on both server and client.
      * Timestamps will help with eliminating time manipulations on client and measuring
@@ -134,13 +134,20 @@ public class ActionUtils {
     }
 
     public static void updateActionList(UserRepository userRepository, UserDetailsImpl userDetails, List<Map<String, Object>> comparedActions){
+        /*try{
+            System.out.println("Comparable: "+comparedActions.size()+" | Actual: "+userDetails.getActions().size());
+        }catch (Exception ignored){
+            System.out.println("Got null actions!");
+        }*/
         if(comparedActions != null && comparedActions.size() > userDetails.getActions().size()){
             for(int i = userDetails.getActions().size(); i < comparedActions.size(); i++){
                 try{
                     Map<String, Object> actionMap = comparedActions.get(i);
                     long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), Long.parseLong((String) actionMap.get("clientTimestamp")));
                     Action action = new Action(EAction.valueOf((String) actionMap.get("action")), (String) actionMap.get("info"), Integer.parseInt((String) actionMap.get("location")), estimatedTimestamp, Long.parseLong((String) actionMap.get("clientTimestamp")));
+                    //System.out.println("Created action "+action.getAction()+" with id: "+ action.getId());
                     userDetails.addAction(userRepository, action);
+                    //System.out.println("Added action "+action.getAction()+" with id: "+ action.getId());
                 }catch (Exception e){
                     e.printStackTrace();
                 }
