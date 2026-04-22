@@ -50,6 +50,7 @@ public class AuthController {
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        System.out.println(ActionUtils.validateActions(userDetails).genReport(true));
 
         ActionUtils.updateActionList(userRepository, userDetails, loginRequest.getActions());
         if(userDetails.getLocationLevel() < loginRequest.getLocationLevel()){
