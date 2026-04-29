@@ -68,6 +68,7 @@ public class ActionUtils {
                                     "Upgraded ability: MORE_EXP | Previous level: "+(moreEXPLevel - 1)+" | Current level: "+moreEXPLevel,
                                     "Money before: "+money_before+" | Money after: "+money
                             );
+                            money_before = money;
                         }
                         if (upgrade.upgrade() == Upgrade.MORE_MONEY) {
                             money -= calcUpgradeCost(Upgrade.MORE_MONEY, moreMoneyLevel++);
@@ -75,6 +76,7 @@ public class ActionUtils {
                                     "Upgraded ability: MORE_MONEY | Previous level: "+(moreMoneyLevel - 1)+" | Current level: "+moreMoneyLevel,
                                     "Money before: "+money_before+" | Money after: "+money
                             );
+                            money_before = money;
                         }
                         if (upgrade.upgrade() == Upgrade.LONGER_STICK) {
                             money -= calcUpgradeCost(Upgrade.LONGER_STICK, longerStickLevel++);
@@ -82,6 +84,7 @@ public class ActionUtils {
                                     "Upgraded ability: LONGER_STICK | Previous level: "+(longerStickLevel - 1)+" | Current level: "+longerStickLevel,
                                     "Money before: "+money_before+" | Money after: "+money
                             );
+                            money_before = money;
                         }
 
                         //Checking time manipulations by comparing timestamps
