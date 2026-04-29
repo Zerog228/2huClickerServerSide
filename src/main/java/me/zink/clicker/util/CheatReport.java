@@ -6,8 +6,6 @@ import org.springframework.data.util.Pair;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.yaml.snakeyaml.nodes.Tag.STR;
-
 public class CheatReport {
 
     private final long user_id;
@@ -52,9 +50,9 @@ public class CheatReport {
         upgrades.add(Pair.of(level, upgrade));
     }
 
-    public void addCheatRate(int location_level, float added_rate, String comment){
-        cheat_rate += added_rate;
-        cheatStamps.add(new CheatStamp(location_level, added_rate, comment));
+    public void addCheatRate(int location_level, CheatType cheatType, String comment){
+        cheat_rate += cheatType.severity;
+        cheatStamps.add(new CheatStamp(location_level, cheatType, comment));
     }
 
     public void addInfoStamp(int location_level, String ... info){
@@ -105,14 +103,20 @@ public class CheatReport {
         builder.append("----------------------\n");
         builder.append("-----Cheat Stamps-----\n");
         for(CheatStamp stamp : cheatStamps){
-            builder.append("Location: ").append(stamp.location_level).append(" | Rate: ").append(stamp.added_rate).append(" | Comment: ").append(stamp.comment).append("\n");
+            builder.append("Location: ").append(stamp.location_level).append(" | Rate: ").append(stamp.cheatType.severity).append(" | Comment: ").append(stamp.comment).append("\n");
         }
 
         return builder.toString();
     }
 
-    private record CheatStamp(int location_level, float added_rate, String comment){
+    private record CheatStamp(int location_level, CheatType cheatType, String comment){
+        CheatStamp(int location_level, CheatType cheatType){
+            this(location_level, cheatType, "No additional comment");
+        }
 
+        public String getMessage(){
+            return cheatType.message + " " + comment;
+        }
     }
 
     private record InfoStamp(int location_level, String ... info){
@@ -120,7 +124,22 @@ public class CheatReport {
     }
 
     public enum CheatType{
+        TIME(0.1, "Time manipulation!"),
+        MONEY(0.2, "Money manipulation!"),
+        TIMESTAMP_ORDER(0.5, "Incorrect timestamp order!"),
+        TIMESTAMP_CONTENTS(0.5, "Incorrect timestamp content!"),
+        CLICKER(0.1, "Auto-clicker!"),
 
+        ERROR(100, "Fatal error!"),
+        SEED(100, "Seed manipulation!");
+
+        private final double severity;
+        private final String message;
+
+        CheatType(double severity, String message){
+            this.severity = severity;
+            this.message = message;
+        }
     }
 
 }

@@ -29,94 +29,100 @@ public class ActionUtils {
         CheatReport report = new CheatReport(userDetails.getId(), userDetails.getUsername(), userDetails.getLocationLevel());
         report.addAction(userDetails.getActions());
 
-        int exp = 0, money = 0;
-        int longerStickLevel = 0, moreMoneyLevel = 0, moreEXPLevel = 0;
+        //Check if first timestamp is INIT
+        if(userDetails.getActions().getFirst().getAction() != EAction.INIT){
+            report.addCheatRate(1, CheatReport.CheatType.ERROR, "First timestamp is not INIT!");
+            return report;
+        }
 
+        PlayerInfo info = new PlayerInfo();
         Action registration = userDetails.getActions().get(0);
         long timeDiff = registration.getClientTimestamp() - registration.getServerTimestamp();
 
         List<MobUtils.MobType> mobs = MobUtils.genMobs(userDetails.getLocationLevel(), userDetails.getMobSeed());
         Map<Integer, List<UpgradeAction>> upgradeMap = mapUpgrades(userDetails.getActions());
-        //System.out.println("Upgrade map: "+upgradeMap);
-        //System.out.println("Max loc level: "+userDetails.getLocationLevel());
 
-        for(int i = 0; i < userDetails.getLocationLevel() - 1; i++){
-            //System.out.println("Location level: "+i);
-            if(i < mobs.size()){
+        for(; info.location_level < userDetails.getLocationLevel() - 1; info.addLocationLevel()){
+            if(info.location_level < mobs.size()){
+
                 //Assign rewards from mob
-                money += (int) /*Location bonus*/ ((getTrueLocLevel(i + 1) * mobs.get(i).getMoneyMult()) * /*Ability bonus*/ (1 + (moreMoneyLevel * Upgrade.MORE_MONEY.getAbilityPower())));
-                exp += (int) /*Location bonus*/ ((getTrueLocLevel(i + 1) * mobs.get(i).getExpMult()) * /*Ability bonus*/ (1 + (moreEXPLevel * Upgrade.MORE_EXP.getAbilityPower())));
+                int money_increase = (int) /*Location bonus*/ ((getTrueLocLevel(info.location_level + 1) * mobs.get(info.location_level).getMoneyMult()) * /*Ability bonus*/ (1 + (info.more_money_lvl * Upgrade.MORE_MONEY.getAbilityPower())));
+                int exp_increase = (int) /*Location bonus*/ ((getTrueLocLevel(info.location_level + 1) * mobs.get(info.location_level).getExpMult()) * /*Ability bonus*/ (1 + (info.more_exp_lvl * Upgrade.MORE_EXP.getAbilityPower())));
 
-                int money_increase = (int) /*Location bonus*/ ((getTrueLocLevel(i + 1) * mobs.get(i).getMoneyMult()) * /*Ability bonus*/ (1 + (moreMoneyLevel * Upgrade.MORE_MONEY.getAbilityPower())));
-                int exp_increase = (int) /*Location bonus*/ ((getTrueLocLevel(i + 1) * mobs.get(i).getExpMult()) * /*Ability bonus*/ (1 + (moreEXPLevel * Upgrade.MORE_EXP.getAbilityPower())));
-                report.addInfoStamp(i,
-                        "Killed mob: "+mobs.get(i).name()+" | Current money: "+money+" | Current exp: "+exp,
+                info.addMoney(money_increase);
+                info.addExp(exp_increase);
+
+                report.addInfoStamp(info.location_level,
+                        "Killed mob: "+mobs.get(info.location_level).name()+" | Current money: "+info.money+" | Current exp: "+info.exp,
                         "Money inc.: "+money_increase+" | Exp inc.: "+exp_increase,
-                        "Loc. Exp. bonus: "+(((getTrueLocLevel(i + 1) * mobs.get(i).getExpMult()))+" | Ability Exp. bonus: "+((1 + (moreEXPLevel * Upgrade.MORE_EXP.getAbilityPower())))),
-                        "Loc. Money. bonus: "+(((getTrueLocLevel(i + 1) * mobs.get(i).getMoneyMult()))+" | Ability Money bonus: "+((1 + (moreMoneyLevel * Upgrade.MORE_MONEY.getAbilityPower()))))
+                        "Loc. Exp. bonus: "+(((getTrueLocLevel(info.location_level + 1) * mobs.get(info.location_level).getExpMult()))+" | Ability Exp. bonus: "+((1 + (info.more_exp_lvl * Upgrade.MORE_EXP.getAbilityPower())))),
+                        "Loc. Money. bonus: "+(((getTrueLocLevel(info.location_level + 1) * mobs.get(info.location_level).getMoneyMult()))+" | Ability Money bonus: "+((1 + (info.more_money_lvl * Upgrade.MORE_MONEY.getAbilityPower()))))
                 );
 
-                //All upgrades that are made on location
-                List<UpgradeAction> upgrades = upgradeMap.get(i + 1);
-                if (upgrades != null && !upgrades.isEmpty()) {
-                    for (UpgradeAction upgrade : upgrades) {
-                        int money_before = money;
-                        //Calc costs
-                        if (upgrade.upgrade() == Upgrade.MORE_EXP) {
-                            money -= calcUpgradeCost(Upgrade.MORE_EXP, moreEXPLevel++);
-                            report.addInfoStamp(i,
-                                    "Upgraded ability: MORE_EXP | Previous level: "+(moreEXPLevel - 1)+" | Current level: "+moreEXPLevel,
-                                    "Money before: "+money_before+" | Money after: "+money
-                            );
-                            money_before = money;
-                        }
-                        if (upgrade.upgrade() == Upgrade.MORE_MONEY) {
-                            money -= calcUpgradeCost(Upgrade.MORE_MONEY, moreMoneyLevel++);
-                            report.addInfoStamp(i,
-                                    "Upgraded ability: MORE_MONEY | Previous level: "+(moreMoneyLevel - 1)+" | Current level: "+moreMoneyLevel,
-                                    "Money before: "+money_before+" | Money after: "+money
-                            );
-                            money_before = money;
-                        }
-                        if (upgrade.upgrade() == Upgrade.LONGER_STICK) {
-                            money -= calcUpgradeCost(Upgrade.LONGER_STICK, longerStickLevel++);
-                            report.addInfoStamp(i,
-                                    "Upgraded ability: LONGER_STICK | Previous level: "+(longerStickLevel - 1)+" | Current level: "+longerStickLevel,
-                                    "Money before: "+money_before+" | Money after: "+money
-                            );
-                            money_before = money;
-                        }
+                //Validate all upgrades that are made on location
+                validateUpgrades(upgradeMap, info, report);
 
-                        //Checking time manipulations by comparing timestamps
-                        long currentTimeDiff = upgrade.action.getClientTimestamp() - upgrade.action.getServerTimestamp();
-                        if (Math.abs(currentTimeDiff - timeDiff) > MAX_TIME_DIFF_MILLS) {
-                            report.addCheatRate(i, 0.01f, "Time manipulation (Upgrades)! Max diff: "+MAX_TIME_DIFF_MILLS+" | Current diff: "+Math.abs(currentTimeDiff - timeDiff));
-                        }
-
-                        //System.out.println("UPGRADE! Location: "+i+" | Type: "+upgrade.upgrade.name());
-                        //If player somehow got more money than he physically could
-                        if (money < 0) {
-                            report.addCheatRate(i, 0.05f, "Money manipulation! Money before: "+money_before+"; Money after upgrades: "+money);
-                            money = 0;
-                        }
-                    }
-                }
             }else{
                 //Seed on client differs from seed on server!
-                report.addCheatRate(i, 1f, "Seed on client differs from seed on server!");
-                break;
+                report.addCheatRate(info.location_level, CheatReport.CheatType.SEED, "Seed on client differs from seed on server!");
+                return report;
             }
         }
+
+        //Timestamp-related logic
+        validateTimestamps(report, userDetails, info, timeDiff);
+
+        return report;
+    }
+
+    private static void validateUpgrades(Map<Integer, List<UpgradeAction>> upgradeMap, PlayerInfo info, CheatReport report){
+        List<UpgradeAction> upgrades = upgradeMap.get(info.location_level + 1);
+        if (upgrades != null && !upgrades.isEmpty()) {
+            for (UpgradeAction upgrade : upgrades) {
+                int money_before = info.money;
+                info.upgradeAbility(upgrade.upgrade, report);
+                report.addInfoStamp(info.location_level,
+                        "Upgraded ability: "+upgrade.upgrade.name()+" | Previous level: "+(info.getUpgradeLevel(upgrade.upgrade) - 1)+" | Current level: "+info.getUpgradeLevel(upgrade.upgrade),
+                        "Money before: "+money_before+" | Money after: "+info.money
+                );
+
+                //Check for money manipulation
+                //If player somehow got more money than he physically could
+                if (info.money < 0) {
+                    report.addCheatRate(info.location_level, CheatReport.CheatType.MONEY, "Money before: "+money_before+"; Money after upgrades: "+info.money);
+                    info.money = 0;
+                }
+            }
+        }
+    }
+
+    private static void validateTimestamps(CheatReport report, UserDetailsImpl userDetails, PlayerInfo info, long timeDiff){
+        int checked_amount = 0, killed_bosses = 0, last_location = 1;
 
         //Compare timestamps
         for(Action action : userDetails.getActions()) {
+            //Time consistency check
             long currentTimeDiff = action.getClientTimestamp() - action.getServerTimestamp();
             if (Math.abs(currentTimeDiff - timeDiff) > MAX_TIME_DIFF_MILLS) {
-                report.addCheatRate(-1, 0.01f, "Time manipulation (Actions)! Max diff: "+MAX_TIME_DIFF_MILLS+" | Current diff: "+Math.abs(currentTimeDiff - timeDiff));
+                report.addCheatRate(-1, CheatReport.CheatType.TIME, "Time manipulation (Actions)! Max diff: "+MAX_TIME_DIFF_MILLS+" | Current diff: "+Math.abs(currentTimeDiff - timeDiff));
             }
-        }
 
-        return report;
+            //Timestamp order manipulation check
+            if(action.getLocation() < last_location){
+                report.addCheatRate(-1, CheatReport.CheatType.TIMESTAMP_ORDER, "Incorrect timestamp order on stamp "+action.getAction()+" "+action.getInfo()+" | Recorded location: "+action.getLocation()+" | Last location: "+last_location);
+            }
+            last_location = action.getLocation();
+
+            //Incorrect boss locations
+            //if(){
+
+            //}
+
+            //Auto-clicker detection
+
+
+            checked_amount++;
+        }
     }
 
     private static Map<Integer, List<UpgradeAction>> mapUpgrades(List<Action> actions){
@@ -125,20 +131,13 @@ public class ActionUtils {
         for(Action action : actions){
             try{
                 if(upgradeMap.containsKey(action.getLocation() - 1)){
-                    //System.out.println("Adding upgrade! "+action.getInfo()+" | Loc: "+action.getLocation());
                     List<UpgradeAction> upgrades = new ArrayList<>(upgradeMap.get(action.getLocation() - 1));
-                    //System.out.println("TEST MESSAGE ---------");
-                    //System.out.println("Current upgrades: "+upgrades);
                     upgrades.add(new UpgradeAction(Upgrade.valueOf(action.getInfo()), action));
-                    //System.out.println("New upgrades: "+upgrades);
                     upgradeMap.put(action.getLocation() - 1, upgrades);
                 }else{
-                    //System.out.println("Created new list for: "+action.getAction()+" | Loc: "+action.getLocation());
                     upgradeMap.put(action.getLocation() - 1, Collections.singletonList(new UpgradeAction(Upgrade.valueOf(action.getInfo()), action)));
                 }
-            }catch (Exception ignored){
-                ignored.printStackTrace();
-            }
+            }catch (Exception ignored){}
         }
         return upgradeMap;
     }
@@ -160,31 +159,24 @@ public class ActionUtils {
      * Useful for discovering auto-clickers
      * */
     public static List<Float> calcTimeBetweenBosses(){
-        return null;
+        return null; //TODO
     }
 
     /**
      * Calculate estimated final time based on given mobs and amount of clicks per second
      * */
     public static float estimateFinalTime(){
-        return 0;
+        return 0; //TODO
     }
 
     public static void updateActionList(UserRepository userRepository, UserDetailsImpl userDetails, List<Map<String, Object>> comparedActions){
-        /*try{
-            System.out.println("Comparable: "+comparedActions.size()+" | Actual: "+userDetails.getActions().size());
-        }catch (Exception ignored){
-            System.out.println("Got null actions!");
-        }*/
         if(comparedActions != null && comparedActions.size() > userDetails.getActions().size()){
             for(int i = userDetails.getActions().size(); i < comparedActions.size(); i++){
                 try{
                     Map<String, Object> actionMap = comparedActions.get(i);
                     long estimatedTimestamp = ActionUtils.calcSTime(userDetails.getActions().get(0).getServerTimestamp(), userDetails.getActions().get(0).getClientTimestamp(), Long.parseLong((String) actionMap.get("clientTimestamp")));
                     Action action = new Action(EAction.valueOf((String) actionMap.get("action")), (String) actionMap.get("info"), Integer.parseInt((String) actionMap.get("location")), estimatedTimestamp, Long.parseLong((String) actionMap.get("clientTimestamp")));
-                    //System.out.println("Created action "+action.getAction()+" with id: "+ action.getId());
                     userDetails.addAction(userRepository, action);
-                    //System.out.println("Added action "+action.getAction()+" with id: "+ action.getId());
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -192,4 +184,105 @@ public class ActionUtils {
         }
     }
     private record UpgradeAction(Upgrade upgrade, Action action) {}
+
+    private static class PlayerInfo{
+
+        private int exp = 0, money = 0, location_level = 0, longer_stick_lvl = 0, more_money_lvl = 0, more_exp_lvl = 0;
+        private PlayerInfo(int exp, int money, int location_level, int longer_stick_lvl, int more_money_lvl, int more_exp_lvl){
+            this.exp = exp;
+            this.money = money;
+            this.location_level = location_level;
+            this.longer_stick_lvl = longer_stick_lvl;
+            this.more_money_lvl = more_money_lvl;
+            this.more_exp_lvl = more_exp_lvl;
+        }
+
+        /**
+         * @return Money left after operation
+         * */
+        private int upgradeAbility(Upgrade upgrade){
+            return switch (upgrade) {
+                case MORE_EXP -> addMoney(-calcUpgradeCost(Upgrade.MORE_EXP, more_exp_lvl++));
+                case MORE_MONEY -> addMoney(-calcUpgradeCost(Upgrade.MORE_MONEY, more_money_lvl++));
+                case LONGER_STICK -> addMoney(-calcUpgradeCost(Upgrade.LONGER_STICK, longer_stick_lvl++));
+                default -> money;
+            };
+        }
+
+        /**
+         * Same as 'upgradeAbility()', but caps upgraded at max level
+         * and sends report if tried upgrading to higher levels then possible
+         * */
+        private int upgradeAbility(Upgrade upgrade, CheatReport report){
+            switch (upgrade) {
+                case MORE_EXP -> {
+                    if(more_exp_lvl + 1 >= upgrade.getMaxLevel()){
+                        report.addCheatRate(location_level, CheatReport.CheatType.TIMESTAMP_CONTENTS, "Tried upgrading "+upgrade.name()+" to level higher than max!");
+                    }else{
+                        addMoney(-calcUpgradeCost(Upgrade.MORE_EXP, more_exp_lvl++));
+                    }
+                }
+                case MORE_MONEY -> {
+                    if(more_money_lvl + 1 >= upgrade.getMaxLevel()){
+                        report.addCheatRate(location_level, CheatReport.CheatType.TIMESTAMP_CONTENTS, "Tried upgrading "+upgrade.name()+" to level higher than max!");
+                    }else{
+                        addMoney(-calcUpgradeCost(Upgrade.MORE_MONEY, more_money_lvl++));
+                    }
+                }
+                case LONGER_STICK -> {
+                    if(longer_stick_lvl + 1 >= upgrade.getMaxLevel()){
+                        report.addCheatRate(location_level, CheatReport.CheatType.TIMESTAMP_CONTENTS, "Tried upgrading "+upgrade.name()+" to level higher than max!");
+                    }else{
+                        addMoney(-calcUpgradeCost(Upgrade.LONGER_STICK, longer_stick_lvl++));
+                    }
+                }
+            };
+
+            return money;
+        }
+
+        private int getUpgradeLevel(Upgrade upgrade){
+            return switch (upgrade) {
+                case MORE_EXP -> more_exp_lvl;
+                case MORE_MONEY -> more_money_lvl;
+                case LONGER_STICK -> longer_stick_lvl;
+                default -> 0;
+            };
+        }
+
+        private void setUpgradeLevel(Upgrade upgrade, int level){
+            switch (upgrade) {
+                case MORE_EXP -> more_exp_lvl = level;
+                case MORE_MONEY -> more_money_lvl = level;
+                case LONGER_STICK -> longer_stick_lvl = level;
+            };
+        }
+
+        private PlayerInfo(){}
+
+        public void addExp(int exp){
+            this.exp += exp;
+        }
+
+        public int addMoney(int money){
+            this.money += money;
+            return this.money;
+        }
+
+        public void addLocationLevel(){
+            this.location_level++;
+        }
+
+        public void addLongerStick(){
+            this.longer_stick_lvl++;
+        }
+
+        public void addMoreMoney(){
+            this.more_money_lvl++;
+        }
+
+        public void addMoreExp(){
+            this.more_exp_lvl++;
+        }
+    }
 }
