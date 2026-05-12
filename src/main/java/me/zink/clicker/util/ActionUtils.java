@@ -30,7 +30,7 @@ public class ActionUtils {
         report.addAction(userDetails.getActions());
 
         //Check if first timestamp is INIT
-        if(userDetails.getActions().getFirst().getAction() != EAction.INIT){
+        if(userDetails.getActions().get(0).getAction() != EAction.INIT){
             report.addCheatRate(1, CheatReport.CheatType.ERROR, "First timestamp is not INIT!");
             return report;
         }
