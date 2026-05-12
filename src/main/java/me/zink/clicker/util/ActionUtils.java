@@ -2,6 +2,7 @@ package me.zink.clicker.util;
 
 import me.zink.clicker.model.Action;
 import me.zink.clicker.model.EAction;
+import me.zink.clicker.model.User;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
 
@@ -26,7 +27,16 @@ public class ActionUtils {
      * @return Value which shows how much user have cheated during game
      * */
     public static CheatReport validateActions(UserDetailsImpl userDetails){
-        CheatReport report = new CheatReport(userDetails.getId(), userDetails.getUsername(), userDetails.getLocationLevel());
+        return validateActions(userDetails.getUser());
+    }
+
+    /**
+     * This method
+     * @param userDetails User who actions will be validated
+     * @return Value which shows how much user have cheated during game
+     * */
+    public static CheatReport validateActions(User userDetails){
+        CheatReport report = new CheatReport(userDetails.getId(), userDetails.getUsername(), userDetails.getLocation_level());
         report.addAction(userDetails.getActions());
 
         //Check if first timestamp is INIT
@@ -39,10 +49,10 @@ public class ActionUtils {
         Action registration = userDetails.getActions().get(0);
         long timeDiff = registration.getClientTimestamp() - registration.getServerTimestamp();
 
-        List<MobUtils.MobType> mobs = MobUtils.genMobs(userDetails.getLocationLevel(), userDetails.getMobSeed());
+        List<MobUtils.MobType> mobs = MobUtils.genMobs(userDetails.getLocation_level(), userDetails.getMob_seed());
         Map<Integer, List<UpgradeAction>> upgradeMap = mapUpgrades(userDetails.getActions());
 
-        for(; info.location_level < userDetails.getLocationLevel() - 1; info.addLocationLevel()){
+        for(; info.location_level < userDetails.getLocation_level() - 1; info.addLocationLevel()){
             if(info.location_level < mobs.size()){
 
                 //Assign rewards from mob
@@ -96,7 +106,7 @@ public class ActionUtils {
         }
     }
 
-    private static void validateTimestamps(CheatReport report, UserDetailsImpl userDetails, PlayerInfo info, long timeDiff){
+    private static void validateTimestamps(CheatReport report, User userDetails, PlayerInfo info, long timeDiff){
         int checked_amount = 0, killed_bosses = 0, last_location = 1;
 
         //Compare timestamps
@@ -113,6 +123,7 @@ public class ActionUtils {
             }
             last_location = action.getLocation();
 
+            //TODO TIMESTAMP VALIDATION
             //Incorrect boss locations
             //if(){
 
@@ -120,9 +131,11 @@ public class ActionUtils {
 
             //Auto-clicker detection
 
-
             checked_amount++;
         }
+    }
+    private static void validateTimestamps(CheatReport report, UserDetailsImpl userDetails, PlayerInfo info, long timeDiff){
+        validateTimestamps(report, userDetails.getUser(), info, timeDiff);
     }
 
     private static Map<Integer, List<UpgradeAction>> mapUpgrades(List<Action> actions){

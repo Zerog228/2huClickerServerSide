@@ -1,15 +1,18 @@
 package me.zink.clicker.controller;
 
+import jakarta.validation.Valid;
+import me.zink.clicker.payload.request.GetCheatInfoRequest;
+import me.zink.clicker.payload.request.LoginRequest;
 import me.zink.clicker.repo.ActionRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.service.UserDetailsImpl;
+import me.zink.clicker.util.ActionUtils;
+import me.zink.clicker.util.CheatReport;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -24,7 +27,8 @@ public class TestController {
 
     @GetMapping("/all")
     public String allAccess() {
-        return actionRepository.findById(2).get().getAction().name();
+
+        return "Test for all!"; //actionRepository.findById(2).get().getAction().name();
     }
 
     @GetMapping("/user")
@@ -39,8 +43,11 @@ public class TestController {
 
     @GetMapping("/mod")
     @PreAuthorize("hasRole('MODERATOR')")
-    public String moderatorAccess() {
-        return "Moderator Board.";
+    public ResponseEntity<?> moderatorAccess(@Valid @RequestBody GetCheatInfoRequest cheatInfoRequest) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CheatReport report = ActionUtils.validateActions(repo.getReferenceById(cheatInfoRequest.getPlayerID()));
+
+        return ResponseEntity.ok(report.genReport());
     }
 
     @GetMapping("/admin")
