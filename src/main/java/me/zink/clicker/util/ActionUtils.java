@@ -52,8 +52,13 @@ public class ActionUtils {
         List<MobUtils.MobType> mobs = MobUtils.genMobs(userDetails.getLocation_level(), userDetails.getMob_seed());
         Map<Integer, List<UpgradeAction>> upgradeMap = mapUpgrades(userDetails.getActions());
 
+        int clicks_made = 0;
         for(; info.location_level < userDetails.getLocation_level() - 1; info.addLocationLevel()){
             if(info.location_level < mobs.size()){
+                //Mob hp
+                //10 - LEVEL_HP_MULT
+                int mob_hp = (int) (10 * getTrueLocLevel(info.location_level + 1) * mobs.get(info.location_level).getHpMult());
+                clicks_made += mob_hp / (1 + info.longer_stick_lvl);
 
                 //Assign rewards from mob
                 int money_increase = (int) /*Location bonus*/ ((getTrueLocLevel(info.location_level + 1) * mobs.get(info.location_level).getMoneyMult()) * /*Ability bonus*/ (1 + (info.more_money_lvl * Upgrade.MORE_MONEY.getAbilityPower())));
@@ -71,6 +76,13 @@ public class ActionUtils {
 
                 //Validate all upgrades that are made on location
                 validateUpgrades(upgradeMap, info, report);
+
+                //General idea is creating timestamps every boss kill and saving amount of clicks required
+                //Because we already know time between those actions we will be able to calculate amount of clicks per second
+                if(info.location_level % MobUtils.getLOCATION_LEVELS_PER_BOSS() == 0){
+                    info.addClicks(info.location_level, clicks_made);
+                    clicks_made = 0;
+                }
 
             }else{
                 //Seed on client differs from seed on server!
@@ -123,13 +135,13 @@ public class ActionUtils {
             }
             last_location = action.getLocation();
 
-            //TODO TIMESTAMP VALIDATION
             //Incorrect boss locations
-            //if(){
+            if(action.getAction() == EAction.KILL_BOSS && action.getLocation() % MobUtils.getLOCATION_LEVELS_PER_BOSS() != 0){
+                report.addCheatRate(action.getLocation(), CheatReport.CheatType.TIMESTAMP_ORDER, "Incorrect boss timestamp on action "+action.getInfo()+"! Expected %"+MobUtils.getLOCATION_LEVELS_PER_BOSS()+", got: "+action.getLocation());
+            }
 
-            //}
-
-            //Auto-clicker detection
+            //TODO Auto-clicker detection
+            //20 мобов между боссами + сам босс. Кол-во хп / урон = кол-во кликов. Время между боссами известно так что можно узнать количество кликов в секунду
 
             checked_amount++;
         }
@@ -171,14 +183,14 @@ public class ActionUtils {
      * Calculate time between killing first 7 bosses.
      * Useful for discovering auto-clickers
      * */
-    public static List<Float> calcTimeBetweenBosses(){
+    public static List<Float> calcTimeBetweenBosses(PlayerInfo info){
         return null; //TODO
     }
 
     /**
      * Calculate estimated final time based on given mobs and amount of clicks per second
      * */
-    public static float estimateFinalTime(){
+    public static float estimateFinalTime(PlayerInfo info){
         return 0; //TODO
     }
 
@@ -201,6 +213,7 @@ public class ActionUtils {
     private static class PlayerInfo{
 
         private int exp = 0, money = 0, location_level = 0, longer_stick_lvl = 0, more_money_lvl = 0, more_exp_lvl = 0;
+        private Map<Integer, Integer> clicks_made = new HashMap<>();
         private PlayerInfo(int exp, int money, int location_level, int longer_stick_lvl, int more_money_lvl, int more_exp_lvl){
             this.exp = exp;
             this.money = money;
@@ -296,6 +309,10 @@ public class ActionUtils {
 
         public void addMoreExp(){
             this.more_exp_lvl++;
+        }
+
+        public void addClicks(int location, int clicks){
+            clicks_made.put(location, clicks);
         }
     }
 }

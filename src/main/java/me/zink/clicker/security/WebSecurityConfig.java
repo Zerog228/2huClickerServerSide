@@ -1,14 +1,18 @@
 package me.zink.clicker.security;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import me.zink.clicker.security.jwt.AuthEntryPointJwt;
 import me.zink.clicker.security.jwt.AuthTokenFilter;
+import me.zink.clicker.security.service.LoginAttemptService;
 import me.zink.clicker.security.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -20,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
 
 @Configuration
 @EnableMethodSecurity
@@ -73,5 +78,25 @@ public class WebSecurityConfig {
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Component
+    public class AuthenticationFailureListener implements ApplicationListener<AuthenticationFailureBadCredentialsEvent> {
+
+        @Autowired
+        private HttpServletRequest request;
+
+        @Autowired
+        private LoginAttemptService loginAttemptService;
+
+        @Override
+        public void onApplicationEvent(AuthenticationFailureBadCredentialsEvent e) {
+            final String xfHeader = request.getHeader("X-Forwarded-For");
+            if (xfHeader == null || xfHeader.isEmpty() || !xfHeader.contains(request.getRemoteAddr())) {
+                loginAttemptService.loginFailed(request.getRemoteAddr());
+            } else {
+                loginAttemptService.loginFailed(xfHeader.split(",")[0]);
+            }
+        }
     }
 }

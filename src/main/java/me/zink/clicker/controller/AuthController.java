@@ -1,6 +1,7 @@
 package me.zink.clicker.controller;
 
 import jakarta.validation.Valid;
+import me.zink.clicker.ToHoClickerApplication;
 import me.zink.clicker.model.*;
 import me.zink.clicker.payload.request.LoginRequest;
 import me.zink.clicker.payload.request.SignupRequest;
@@ -9,6 +10,7 @@ import me.zink.clicker.payload.response.MessageResponse;
 import me.zink.clicker.repo.RoleRepository;
 import me.zink.clicker.repo.UserRepository;
 import me.zink.clicker.security.jwt.JwtUtils;
+import me.zink.clicker.security.service.LoginAttemptService;
 import me.zink.clicker.security.service.UserDetailsImpl;
 import me.zink.clicker.util.ActionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +43,15 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     @PostMapping(value = "/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        if(loginAttemptService.isBlocked()){
+            return ResponseEntity.badRequest().build();
+        }
+        System.out.println("Pre-manager");
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -50,7 +59,7 @@ public class AuthController {
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        System.out.println(ActionUtils.validateActions(userDetails).genReport(true));
+        System.out.println(ActionUtils.validateActions(userDetails).genReport(false));
 
         ActionUtils.updateActionList(userRepository, userDetails, loginRequest.getActions());
         if(userDetails.getLocationLevel() < loginRequest.getLocationLevel()){
@@ -85,6 +94,12 @@ public class AuthController {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Email is already in use!"));
+        }
+
+        if(ToHoClickerApplication.PASSWORDS.contains(signUpRequest.getPassword().toUpperCase())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: Password is too weak!"));
         }
 
         // Create new user's account
